@@ -9,7 +9,7 @@
 |-------|-------|
 | **Proyecto** | Inventario Almo |
 | **Tech Stack** | React + Vite + Express + Prisma + SQLite |
-| **Servidor** | 192.168.0.12 |
+| **Servidor** | 192.168.0.14 |
 | **Usuario Admin** | inventario / root |
 | **Contraseña** | 123456789 |
 

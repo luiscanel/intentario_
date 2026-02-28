@@ -97,8 +97,15 @@ mkdir -p /var/log/inventario-almo
 # ============================================
 log_step "Clonando proyecto desde GitHub..."
 
-# URL del repositorio
+# URL del repositorio - usar token si está definido
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 REPO_URL="https://github.com/luiscanel/Host_Dedicado.git"
+
+if [ -n "$GITHUB_TOKEN" ]; then
+    # Usar token para autenticación
+    REPO_URL="https://${GITHUB_TOKEN}@github.com/luiscanel/Host_Dedicado.git"
+    log_info "Usando token de GitHub para clonar"
+fi
 
 # Si el directorio ya existe, hacer pull, si no, clonar
 if [ -d "$APP_DIR/.git" ]; then
@@ -108,7 +115,7 @@ if [ -d "$APP_DIR/.git" ]; then
 else
     # Eliminar directorio si existe sin .git
     rm -rf $APP_DIR
-    git clone $REPO_URL $APP_DIR
+    git clone "$REPO_URL" $APP_DIR
     cd $APP_DIR
 fi
 
