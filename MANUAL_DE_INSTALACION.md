@@ -28,15 +28,9 @@
 
 ## Instalación Automática (Recomendado)
 
-### Opción 1: Copiar proyecto y ejecutar script
+### Opción 1: Clonar desde GitHub y ejecutar script
 
-1. **Desde tu máquina local**, copia el proyecto al servidor:
-
-```bash
-scp -r /home/teknao/Escritorio/Proyectos/Inventario_Host_dedicado/* inventario@192.168.0.12:/tmp/inventario-almo/
-```
-
-2. **En el servidor**, ejecuta el script de instalación:
+1. **En el servidor**, ejecuta el script de instalación:
 
 ```bash
 # Conectar al servidor
@@ -45,8 +39,17 @@ ssh inventario@192.168.0.12
 # Convertirse en root
 sudo su
 
-# Ir al directorio del proyecto
-cd /tmp/inventario-almo
+# Ejecutar el script de instalación (clona desde GitHub automáticamente)
+curl -sSL https://raw.githubusercontent.com/luiscanel/Host_Dedicado/master/deploy.sh | bash
+```
+
+O si ya tienes el proyecto clonado:
+
+```bash
+cd /opt/inventario-almo
+chmod +x deploy.sh
+./deploy.sh
+```
 
 # Dar permisos de ejecución al script
 chmod +x deploy.sh

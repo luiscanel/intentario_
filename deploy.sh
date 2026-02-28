@@ -93,20 +93,23 @@ mkdir -p $APP_DIR/backups
 mkdir -p /var/log/inventario-almo
 
 # ============================================
-# Paso 6: Copiar archivos del proyecto
+# Paso 6: Clonar proyecto desde GitHub
 # ============================================
-log_step "Configurando archivos del proyecto..."
+log_step "Clonando proyecto desde GitHub..."
 
-# Si estamos en el servidor, clonar o copiar
-# Aquí asumimos que el proyecto ya está en el directorio actual
-if [ -f "package.json" ]; then
-    log_info "Copiando archivos del proyecto..."
-    cp -r . $APP_DIR/
+# URL del repositorio
+REPO_URL="https://github.com/luiscanel/Host_Dedicado.git"
+
+# Si el directorio ya existe, hacer pull, si no, clonar
+if [ -d "$APP_DIR/.git" ]; then
+    log_info "Repositorio ya existe, actualizando..."
     cd $APP_DIR
+    git pull origin master
 else
-    log_error "No se encontró el proyecto en el directorio actual"
-    log_error "Por favor copie el proyecto a este servidor primero"
-    exit 1
+    # Eliminar directorio si existe sin .git
+    rm -rf $APP_DIR
+    git clone $REPO_URL $APP_DIR
+    cd $APP_DIR
 fi
 
 # ============================================
