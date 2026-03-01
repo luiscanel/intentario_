@@ -182,6 +182,24 @@ npx prisma generate
 log_step "Creando base de datos..."
 npx prisma db push
 
+# Verificar que la base de datos se creó correctamente
+if [ ! -f "$APP_DIR/server/prisma/dev.db" ]; then
+    log_warn "La base de datos no está en la ubicación esperada, buscando..."
+    # Buscar si se creó en otra ubicación
+    DB_FOUND=$(find $APP_DIR -name "dev.db" 2>/dev/null | head -1)
+    if [ -n "$DB_FOUND" ]; then
+        log_info "Base de datos encontrada en: $DB_FOUND"
+        # Mover a la ubicación correcta
+        mv "$DB_FOUND" "$APP_DIR/server/prisma/dev.db"
+        log_info "Base de datos movida a la ubicación correcta"
+    else
+        log_error "No se encontró la base de datos"
+        exit 1
+    fi
+fi
+
+log_info "Base de datos verificada en: $APP_DIR/server/prisma/dev.db"
+
 # ============================================
 # Paso 12: Crear usuario administrador
 # ============================================

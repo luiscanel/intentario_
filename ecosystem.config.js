@@ -19,11 +19,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3001,
         HOST: '0.0.0.0'
-      },
-      error_file: '/var/log/inventario-almo/backend-error.log',
-      out_file: '/var/log/inventario-almo/backend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      merge_logs: true
+      }
     },
     {
       name: 'inventario-frontend',
@@ -38,11 +34,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         VITE_API_URL: 'http://localhost:3001'
-      },
-      error_file: '/var/log/inventario-almo/frontend-error.log',
-      out_file: '/var/log/inventario-almo/frontend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      merge_logs: true
+      }
     }
   ]
 }
