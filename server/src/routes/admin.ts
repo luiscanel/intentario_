@@ -438,4 +438,36 @@ router.delete('/servidores', async (req, res) => {
   }
 })
 
+// ============================================
+// AUDIT LOG
+// ============================================
+
+// Get all audit logs
+router.get('/audit', async (req, res) => {
+  try {
+    const { page = '1', limit = '100' } = req.query
+    const pageNum = parseInt(page as string)
+    const limitNum = parseInt(limit as string)
+    const skip = (pageNum - 1) * limitNum
+
+    const [logs, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum
+      }),
+      prisma.auditLog.count()
+    ])
+
+    res.json({
+      success: true,
+      data: logs,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) }
+    })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error al obtener audit log', code: 'FETCH_ERROR' })
+  }
+})
+
 export default router

@@ -52,7 +52,7 @@ model Permiso {
   rol      Rol?    @relation(fields: [rolId], references: [id], onDelete: Cascade)
   rolId    Int?
 
-  @@unique([moduloId, accion])
+  //@@unique([moduloId, accion]) // Comentado para permitir múltiples permisos de rol
 }
 
 // Relación muchos a muchos usuarios-roles
@@ -95,6 +95,7 @@ model Servidor {
   antivirus        String?
   estado           String
   responsable      String?
+  documentos       Documento[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -179,4 +180,126 @@ model AuditLog {
   ip          String?
   userAgent   String?
   createdAt   DateTime @default(now())
+}
+
+// ============================================
+// PROVEEDORES
+// ============================================
+model Proveedor {
+  id          Int        @id @default(autoincrement())
+  nombre      String
+  contacto    String?
+  email       String?
+  telefono    String?
+  direccion   String?
+  servicios   String?    // Servicios que provee (separados por coma)
+  notas       String?
+  activo      Boolean    @default(true)
+  contratos   Contrato[]
+  licencias   Licencia[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// ============================================
+// CONTRATOS Y GARANTÍAS
+// ============================================
+model Contrato {
+  id            Int       @id @default(autoincrement())
+  proveedorId   Int?
+  proveedor     Proveedor? @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
+  tipo          String    // Mantenimiento, Soporte, Hosting, Garantía, Otro
+  numero        String?   // Número de contrato
+  objeto        String?   // Descripción del contrato
+  monto         Float?
+  moneda        String    @default("USD")
+  fechaInicio   DateTime
+  fechaFin      DateTime
+  estado        String    @default("Activo") // Activo, Vencido, Renovado, Cancelado
+  observaciones String?
+  diasAviso     Int       @default(30) // Días de aviso antes de vencer
+  documentos    Documento[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================
+// DOCUMENTOS
+// ============================================
+model Documento {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  tipo        String    // contrato, licencia, factura, otro
+  url         String
+  mimeType    String?
+  tamano      Int?      // bytes
+  contratoId  Int?
+  contrato    Contrato? @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  licenciaId  Int?
+  licencia    Licencia? @relation(fields: [licenciaId], references: [id], onDelete: Cascade)
+  servidorId  Int?
+  servidor    Servidor? @relation(fields: [servidorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+// ============================================
+// LICENCIAS DE SOFTWARE
+// ============================================
+model Licencia {
+  id            Int       @id @default(autoincrement())
+  nombre        String
+  tipo          String    // Windows, Office, Antivirus, SQL, Otro
+  version       String?
+  cantidad      Int       @default(1)
+  usada         Int       @default(0)
+  costo         Float?
+  moneda        String    @default("USD")
+  fechaCompra   DateTime?
+  fechaVencimiento DateTime?
+  proveedorId   Int?
+  proveedor     Proveedor? @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
+  servidorId    Int?      // Servidor donde está instalada (opcional)
+  notas         String?
+  activa        Boolean   @default(true)
+  documentos    Documento[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================
+// MONITOR DE DISPONIBILIDAD
+// ============================================
+model Disponibilidad {
+  id          Int       @id @default(autoincrement())
+  servidorId  Int?      // Relación opcional con servidor
+  ip          String
+  nombre      String?   // Nombre del host
+  status      String    @default("unknown") // online, offline, unknown
+  latency     Int?      // Latencia en ms
+  ultimoCheck DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+}
+
+model HistorialDisponibilidad {
+  id          Int       @id @default(autoincrement())
+  ip          String
+  status      String    // online, offline
+  latency     Int?
+  checkTime   DateTime  @default(now())
+}
+
+// ============================================
+// ALERTAS
+// ============================================
+model Alerta {
+  id          Int       @id @default(autoincrement())
+  tipo        String    // info, warning, error, critical
+  titulo      String
+  mensaje     String
+  entidad     String?   // Servidor, Contrato, Licencia, etc.
+  entidadId   Int?
+  leida       Boolean   @default(false)
+  leidaPor    String?
+  leidaAt     DateTime?
+  createdAt   DateTime  @default(now())
 }

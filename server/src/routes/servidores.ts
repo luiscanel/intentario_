@@ -8,13 +8,59 @@ const router = Router()
 
 router.use(authMiddleware)
 
-// Obtener todos los servidores
+// Obtener todos los servidores (con paginación y filtros)
 router.get('/', async (req, res) => {
   try {
-    const servidores = await prisma.servidor.findMany({
-      orderBy: { id: 'desc' }
+    const { 
+      page = '1', 
+      limit = '50', 
+      search = '',
+      pais,
+      ambiente,
+      estado,
+      sortBy = 'id',
+      sortOrder = 'desc'
+    } = req.query
+
+    const pageNum = parseInt(page as string)
+    const limitNum = parseInt(limit as string)
+    const skip = (pageNum - 1) * limitNum
+
+    // Construir filtros
+    const where: any = {}
+    
+    if (search) {
+      where.OR = [
+        { nombreVM: { contains: search as string } },
+        { ip: { contains: search as string } },
+        { host: { contains: search as string } },
+        { responsable: { contains: search as string } },
+      ]
+    }
+    if (pais) where.pais = pais
+    if (ambiente) where.ambiente = ambiente
+    if (estado) where.estado = estado
+
+    const [servidores, total] = await Promise.all([
+      prisma.servidor.findMany({
+        where,
+        orderBy: { [sortBy as string]: sortOrder },
+        skip,
+        take: limitNum
+      }),
+      prisma.servidor.count({ where })
+    ])
+
+    res.json({ 
+      success: true, 
+      data: servidores,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      }
     })
-    res.json({ success: true, data: servidores })
   } catch (error) {
     console.error('Error:', error)
     res.status(500).json({ 
@@ -22,6 +68,36 @@ router.get('/', async (req, res) => {
       message: 'Error al obtener servidores',
       code: 'FETCH_ERROR'
     })
+  }
+})
+
+// Búsqueda avanzada
+router.get('/search', async (req, res) => {
+  try {
+    const { q = '' } = req.query
+    
+    if (!q || (q as string).length < 2) {
+      return res.json({ success: true, data: [] })
+    }
+
+    const servidores = await prisma.servidor.findMany({
+      where: {
+        OR: [
+          { nombreVM: { contains: q as string } },
+          { ip: { contains: q as string } },
+          { host: { contains: q as string } },
+          { responsable: { contains: q as string } },
+          { sistemaOperativo: { contains: q as string } },
+        ]
+      },
+      take: 20,
+      orderBy: { nombreVM: 'asc' }
+    })
+
+    res.json({ success: true, data: servidores })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error en búsqueda' })
   }
 })
 

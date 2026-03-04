@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import { Search, LayoutDashboard, Server, HardDrive, FileText, Users, LogOut, Menu, Shield, Cpu, Activity, User, Cloud, ChevronRight, Key } from 'lucide-react'
+import { Search, LayoutDashboard, Server, HardDrive, FileText, Users, LogOut, Menu, Shield, Cpu, Activity, User, Cloud, ChevronRight, Key, Building2, FileKey, FileCheck, Bell, History } from 'lucide-react'
 import { changePassword } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,11 @@ const modulos = [
   { to: '/inventory', icon: Server, label: 'Inv. Onpremise', permiso: { modulo: 'inventario_servidores', accion: 'ver' } },
   { to: '/inventario-cloud', icon: Cloud, label: 'Inv. Cloud', permiso: { modulo: 'inventario_cloud', accion: 'ver' } },
   { to: '/inventario-fisico', icon: HardDrive, label: 'Inventario Físico', permiso: { modulo: 'inventario_fisico', accion: 'ver' } },
+  { to: '/monitor', icon: Activity, label: 'Monitor', permiso: null },
+  { to: '/proveedores', icon: Building2, label: 'Proveedores', permiso: null },
+  { to: '/licencias', icon: FileKey, label: 'Licencias', permiso: null },
+  { to: '/contratos', icon: FileCheck, label: 'Contratos', permiso: null },
+  { to: '/alertas', icon: Bell, label: 'Alertas', permiso: null },
   { to: '/seguridad', icon: Shield, label: 'Seguridad', permiso: null },
   { to: '/recursos', icon: Cpu, label: 'Recursos', permiso: null },
   { to: '/disponibilidad', icon: Activity, label: 'Disponibilidad', permiso: null },
@@ -21,6 +26,7 @@ const modulos = [
   { to: '/responsables', icon: User, label: 'Responsables', permiso: null },
   { to: '/reports', icon: FileText, label: 'Informes', permiso: { modulo: 'informes', accion: 'ver' } },
   { to: '/admin', icon: Users, label: 'Admin', permiso: { modulo: 'admin', accion: 'ver' } },
+  { to: '/audit-log', icon: History, label: 'Audit Log', permiso: { modulo: 'admin', accion: 'ver' } },
 ]
 
 export default function Layout() {
@@ -90,6 +96,7 @@ export default function Layout() {
         bg-slate-900/95 backdrop-blur-xl text-white 
         transition-all duration-300 ease-out
         border-r border-slate-700/50
+        overflow-y-auto
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
       `}>
         {/* Logo */}
