@@ -212,6 +212,61 @@ export const sendEmailSchema = z.object({
 })
 
 // ============================================
+// PROVEEDOR VALIDATION
+// ============================================
+export const proveedorSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es requerido').max(255),
+  contacto: z.string().max(255).optional().nullable(),
+  email: z.string().email('Email inválido').max(255).optional().nullable(),
+  telefono: z.string().max(50).optional().nullable(),
+  direccion: z.string().max(500).optional().nullable(),
+  servicios: z.string().max(1000).optional().nullable(),
+  notas: z.string().max(2000).optional().nullable(),
+  activo: z.boolean().optional(),
+})
+
+export const proveedorUpdateSchema = proveedorSchema.partial()
+
+// ============================================
+// CONTRATO VALIDATION
+// ============================================
+export const contratoSchema = z.object({
+  proveedorId: z.number().int().positive().optional().nullable(),
+  tipo: z.string().min(1, 'El tipo es requerido').max(100),
+  numero: z.string().max(100).optional().nullable(),
+  objeto: z.string().max(1000).optional().nullable(),
+  monto: z.number().min(0).optional().nullable(),
+  moneda: z.string().max(10).optional(),
+  fechaInicio: z.string().or(z.date()),
+  fechaFin: z.string().or(z.date()),
+  estado: z.string().max(50).optional(),
+  observaciones: z.string().max(2000).optional().nullable(),
+})
+
+export const contratoUpdateSchema = contratoSchema.partial()
+
+// ============================================
+// LICENCIA VALIDATION
+// ============================================
+export const licenciaSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es requerido').max(255),
+  tipo: z.string().min(1, 'El tipo es requerido').max(100),
+  version: z.string().max(50).optional().nullable(),
+  cantidad: z.number().int().min(0).optional(),
+  usada: z.number().int().min(0).optional(),
+  costo: z.number().min(0).optional().nullable(),
+  moneda: z.string().max(10).optional(),
+  fechaCompra: z.string().or(z.date()).optional().nullable(),
+  fechaVencimiento: z.string().or(z.date()).optional().nullable(),
+  proveedorId: z.number().int().positive().optional().nullable(),
+  servidorId: z.number().int().positive().optional().nullable(),
+  notas: z.string().max(2000).optional().nullable(),
+  activa: z.boolean().optional(),
+})
+
+export const licenciaUpdateSchema = licenciaSchema.partial()
+
+// ============================================
 // VALIDATION MIDDLEWARE
 // ============================================
 

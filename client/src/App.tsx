@@ -13,6 +13,12 @@ import InventarioFisico from './pages/InventarioFisico'
 import InventoryCloud from './pages/InventoryCloud'
 import Reports from './pages/Reports'
 import Admin from './pages/Admin'
+import Proveedores from './pages/Proveedores'
+import Licencias from './pages/Licencias'
+import Contratos from './pages/Contratos'
+import Alertas from './pages/Alertas'
+import Monitor from './pages/Monitor'
+import AuditLog from './pages/AuditLog'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -44,6 +50,12 @@ function App() {
           <Route path="inventario-fisico" element={<InventarioFisico />} />
           <Route path="reports" element={<Reports />} />
           <Route path="admin" element={<Admin />} />
+          <Route path="proveedores" element={<Proveedores />} />
+          <Route path="licencias" element={<Licencias />} />
+          <Route path="contratos" element={<Contratos />} />
+          <Route path="alertas" element={<Alertas />} />
+          <Route path="monitor" element={<Monitor />} />
+          <Route path="audit-log" element={<AuditLog />} />
         </Route>
       </Routes>
       <Toaster />

@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
 import authRoutes from './routes/auth'
 import servidoresRoutes from './routes/servidores'
 import inventarioFisicoRoutes from './routes/inventarioFisico'
@@ -10,6 +11,12 @@ import dashboardNewRoutes from './routes/dashboardNew'
 import adminRoutes from './routes/admin'
 import emailRoutes from './routes/email'
 import backupRoutes from './routes/backup'
+import proveedoresRoutes from './routes/proveedores'
+import licenciasRoutes from './routes/licencias'
+import contratosRoutes from './routes/contratos'
+import alertasRoutes from './routes/alertas'
+import monitorRoutes from './routes/monitor'
+import documentosRoutes from './routes/documentos'
 
 // Importar configuración y seguridad
 import { config } from './config/index.js'
@@ -52,6 +59,9 @@ app.use(express.json({ limit: '10mb' }))
 // Parser para form data
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
+// Archivos estáticos (uploads)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+
 // Logging de requests
 app.use(requestLogger)
 
@@ -73,6 +83,14 @@ app.use('/api/inventario-cloud', inventarioCloudRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/email', emailRoutes)
 app.use('/api/backup', backupRoutes)
+
+// Nuevas rutas
+app.use('/api/proveedores', proveedoresRoutes)
+app.use('/api/licencias', licenciasRoutes)
+app.use('/api/contratos', contratosRoutes)
+app.use('/api/alertas', alertasRoutes)
+app.use('/api/monitor', monitorRoutes)
+app.use('/api/documentos', documentosRoutes)
 
 // ============================================
 // HEALTH CHECK

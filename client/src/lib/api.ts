@@ -39,7 +39,21 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const json = await response.json()
   // Si la respuesta tiene estructura { success, data }, extraer data
   if (json && typeof json === 'object' && 'data' in json) {
-    return json.data as T
+    const data = json.data
+    // Si es un array, asegurar que siempre sea array (nunca null/undefined)
+    if (Array.isArray(data)) {
+      return data as T
+    }
+    // Si es null/undefined, devolver array vacío
+    if (data === null || data === undefined) {
+      return [] as T
+    }
+    return data as T
+  }
+  // Si json es null o undefined, devolver valor por defecto según el tipo esperado
+  if (json === null || json === undefined) {
+    // Retornar array vacío por defecto para tipos de array
+    return [] as T
   }
   return json as T
 }
@@ -540,4 +554,201 @@ export async function downloadBackup(filename: string): Promise<Blob> {
     throw new Error('Error al descargar backup')
   }
   return res.blob()
+}
+
+// ============================================
+// PROVEEDORES
+// ============================================
+export async function getProveedores() {
+  const res = await fetch(`${API_URL}/proveedores`, { headers: getHeaders() })
+  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
+  return json?.data || []
+}
+
+export async function createProveedor(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/proveedores`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateProveedor(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/proveedores/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteProveedor(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/proveedores/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// LICENCIAS
+// ============================================
+export async function getLicencias() {
+  const res = await fetch(`${API_URL}/licencias`, { headers: getHeaders() })
+  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
+  return json?.data || []
+}
+
+export async function createLicencia(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/licencias`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateLicencia(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/licencias/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteLicencia(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/licencias/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// CONTRATOS
+// ============================================
+export async function getContratos() {
+  const res = await fetch(`${API_URL}/contratos`, { headers: getHeaders() })
+  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
+  return json?.data || []
+}
+
+export async function createContrato(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/contratos`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateContrato(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/contratos/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteContrato(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/contratos/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// ALERTAS
+// ============================================
+export async function getAlertas() {
+  const res = await fetch(`${API_URL}/alertas`, { headers: getHeaders() })
+  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
+  return json?.data || []
+}
+
+export async function marcarAlertaLeida(id: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/alertas/${id}/leer`, {
+    method: 'PUT',
+    headers: getHeaders()
+  }))
+}
+
+export async function marcarTodasAlertasLeidas() {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/alertas/marcar-todas-leidas`, {
+    method: 'PUT',
+    headers: getHeaders()
+  }))
+}
+
+export async function deleteAlerta(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/alertas/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// MONITOR
+// ============================================
+export async function getMonitor() {
+  const res = await fetch(`${API_URL}/monitor`, { headers: getHeaders() })
+  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
+  return json?.data || []
+}
+
+export async function addMonitor(data: { ip: string; nombre?: string }) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/monitor`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteMonitor(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/monitor/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+export async function pingAll() {
+  return handleResponse<{ success: boolean; total: number; online: number; offline: number }>(await fetch(`${API_URL}/monitor/ping-all`, {
+    method: 'POST',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+export async function getAuditLogs(page = 1, limit = 100) {
+  const res = await fetch(`${API_URL}/admin/audit?page=${page}&limit=${limit}`, { headers: getHeaders() })
+  const json = await handleResponse<{ success: boolean; data: any[]; pagination?: any }>(res)
+  return json?.data || []
+}
+
+// ============================================
+// DOCUMENTOS
+// ============================================
+export async function getDocumentos(tipo?: string, entidadId?: number, entidadTipo?: string) {
+  let url = `${API_URL}/documentos`
+  const params = new URLSearchParams()
+  if (tipo) params.append('tipo', tipo)
+  if (entidadId && entidadTipo) {
+    params.append('entidadId', entidadId.toString())
+    params.append('entidadTipo', entidadTipo)
+  }
+  if (params.toString()) url += `?${params.toString()}`
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(url, { headers: getHeaders() }))
+}
+
+export async function uploadDocumento(formData: FormData) {
+  const token = localStorage.getItem('token')
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/documentos`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
+  }))
+}
+
+export async function deleteDocumento(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/documentos/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
 }
