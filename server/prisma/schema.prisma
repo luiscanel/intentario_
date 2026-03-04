@@ -80,20 +80,20 @@ model User {
 }
 
 model Servidor {
-  id               Int     @id @default(autoincrement())
-  pais             String
-  host             String
+  id               Int      @id @default(autoincrement())
+  pais             String?
+  host             String?
   nombreVM         String?
   ip               String?
   cpu              Int?
   memoria          String?
   disco            String?
-  ambiente         String
+  ambiente         String?
   arquitectura     String?
   sistemaOperativo String?
   version          String?
   antivirus        String?
-  estado           String
+  estado           String?
   responsable      String?
   documentos       Documento[]
   createdAt        DateTime @default(now())
@@ -208,13 +208,13 @@ model Contrato {
   id            Int       @id @default(autoincrement())
   proveedorId   Int?
   proveedor     Proveedor? @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
-  tipo          String    // Mantenimiento, Soporte, Hosting, Garantía, Otro
+  tipo          String?   // Mantenimiento, Soporte, Hosting, Garantía, Otro
   numero        String?   // Número de contrato
   objeto        String?   // Descripción del contrato
   monto         Float?
   moneda        String    @default("USD")
-  fechaInicio   DateTime
-  fechaFin      DateTime
+  fechaInicio   DateTime?
+  fechaFin      DateTime?
   estado        String    @default("Activo") // Activo, Vencido, Renovado, Cancelado
   observaciones String?
   diasAviso     Int       @default(30) // Días de aviso antes de vencer

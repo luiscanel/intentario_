@@ -232,15 +232,16 @@ export const proveedorUpdateSchema = proveedorSchema.partial()
 // ============================================
 export const contratoSchema = z.object({
   proveedorId: z.number().int().positive().optional().nullable(),
-  tipo: z.string().min(1, 'El tipo es requerido').max(100),
+  tipo: z.string().max(100).optional().nullable(),
   numero: z.string().max(100).optional().nullable(),
   objeto: z.string().max(1000).optional().nullable(),
   monto: z.number().min(0).optional().nullable(),
   moneda: z.string().max(10).optional(),
-  fechaInicio: z.string().or(z.date()),
-  fechaFin: z.string().or(z.date()),
+  fechaInicio: z.string().or(z.date()).optional().nullable(),
+  fechaFin: z.string().or(z.date()).optional().nullable(),
   estado: z.string().max(50).optional(),
   observaciones: z.string().max(2000).optional().nullable(),
+  diasAviso: z.number().int().min(0).optional(),
 })
 
 export const contratoUpdateSchema = contratoSchema.partial()

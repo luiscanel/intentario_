@@ -164,13 +164,14 @@ router.get('/:id', async (req, res) => {
 // Crear contrato
 router.post('/', validate(contratoSchema), async (req, res) => {
   try {
+    console.log('Creating contrato with data:', req.body)
     const contrato = await prisma.contrato.create({ 
       data: req.body,
       include: { proveedor: true }
     })
     res.status(201).json({ success: true, data: contrato })
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error creating contrato:', error)
     res.status(500).json({ success: false, message: 'Error al crear contrato' })
   }
 })
