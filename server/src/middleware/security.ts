@@ -68,24 +68,23 @@ export const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     const allowedOrigins = securityConfig.corsOrigin.split(',').map(o => o.trim())
     
-    // En desarrollo, permitir sin origin header
+    // Permitir sin origin (como curl, Postman, o conexiones internas)
     if (!origin) {
-      if (securityConfig.isProduction) {
-        return callback(new Error('CORS: No origin provided'), false)
-      }
       return callback(null, true)
     }
     
     // Verificar si el origin está permitido
     if (allowedOrigins.includes('*')) {
-      // En producción, no permitir wildcard
-      if (securityConfig.isProduction) {
-        return callback(new Error('CORS: Wildcard not allowed in production'), false)
-      }
       return callback(null, true)
     }
     
     if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    
+    // Permitir origin que contenga la IP del servidor
+    const serverIp = securityConfig.corsOrigin.replace('http://', '').replace('https://', '').split(':')[0]
+    if (origin.includes(serverIp)) {
       return callback(null, true)
     }
     
