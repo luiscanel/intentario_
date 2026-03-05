@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../../prisma'
 import { authMiddleware, requireAdmin } from '../../middleware/auth'
 import { createAuditLog, getRequestInfo } from '../../services/auditLogService'
+import { validate, costoSchema, costoUpdateSchema } from '../../validations/index'
 
 const router = Router()
 
@@ -154,7 +155,7 @@ router.get('/mes/:mes', authMiddleware, async (req, res) => {
 })
 
 // Agregar costo manualmente
-router.post('/', authMiddleware, requireAdmin, async (req, res) => {
+router.post('/', authMiddleware, requireAdmin, validate(costoSchema), async (req, res) => {
   try {
     const { proveedor, cuenta, servicio, region, mes, moneda, monto, etiquetas } = req.body
     
@@ -267,7 +268,7 @@ router.post('/importar', authMiddleware, requireAdmin, async (req, res) => {
 })
 
 // Actualizar costo
-router.put('/:id', authMiddleware, requireAdmin, async (req, res) => {
+router.put('/:id', authMiddleware, requireAdmin, validate(costoUpdateSchema), async (req, res) => {
   try {
     const { id } = req.params
     const { proveedor, cuenta, servicio, region, mes, moneda, monto, etiquetas } = req.body

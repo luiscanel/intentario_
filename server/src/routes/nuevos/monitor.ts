@@ -3,6 +3,7 @@ import { prisma } from '../../prisma'
 import { authMiddleware, requireAdmin } from '../../middleware/auth'
 import { createAuditLog, getRequestInfo } from '../../services/auditLogService'
 import { checkService } from '../../services/monitorService'
+import { validate, servicioSchema, servicioUpdateSchema } from '../../validations/index'
 
 const router = Router()
 
@@ -117,7 +118,7 @@ router.get('/:id/historial', authMiddleware, async (req, res) => {
 })
 
 // Agregar servicio para monitorear
-router.post('/', authMiddleware, requireAdmin, async (req, res) => {
+router.post('/', authMiddleware, requireAdmin, validate(servicioSchema), async (req, res) => {
   try {
     const { ip, nombre, tipo, puerto } = req.body
     
@@ -167,7 +168,7 @@ router.post('/', authMiddleware, requireAdmin, async (req, res) => {
 })
 
 // Actualizar servicio
-router.put('/:id', authMiddleware, requireAdmin, async (req, res) => {
+router.put('/:id', authMiddleware, requireAdmin, validate(servicioUpdateSchema), async (req, res) => {
   try {
     const { id } = req.params
     const { ip, nombre, tipo, puerto } = req.body

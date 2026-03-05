@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { prisma } from '../../prisma'
 import { authMiddleware, requireAdmin } from '../../middleware/auth'
 import { createAuditLog, getRequestInfo } from '../../services/auditLogService'
+import { validate, certificadoSchema, certificadoUpdateSchema } from '../../validations/index'
+import { z } from 'zod'
 
 const router = Router()
 
@@ -108,7 +110,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 })
 
 // Crear certificado
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(certificadoSchema), async (req, res) => {
   try {
     const { dominio, tipo, emisor, fechaEmision, fechaVencimiento, proveedorId, servidorId, notas } = req.body
     
@@ -144,7 +146,7 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // Actualizar certificado
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, validate(certificadoUpdateSchema), async (req, res) => {
   try {
     const { id } = req.params
     const { dominio, tipo, emisor, fechaEmision, fechaVencimiento, proveedorId, servidorId, notas, activo } = req.body

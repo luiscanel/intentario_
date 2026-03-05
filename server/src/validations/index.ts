@@ -268,6 +268,97 @@ export const licenciaSchema = z.object({
 export const licenciaUpdateSchema = licenciaSchema.partial()
 
 // ============================================
+// CERTIFICADOS SSL VALIDATION
+// ============================================
+
+export const certificadoSchema = z.object({
+  dominio: z.string().min(1, 'El dominio es requerido').max(255, 'Dominio muy largo').regex(/^[a-zA-Z0-9\-\.]+$/, 'Dominio inválido'),
+  tipo: z.enum(['single', 'wildcard', 'multi']).default('single'),
+  emisor: z.string().max(255).optional().nullable(),
+  fechaEmision: z.string().or(z.date()).optional().nullable(),
+  fechaVencimiento: z.string().min(1, 'La fecha de vencimiento es requerida'),
+  proveedorId: z.number().int().positive().optional().nullable(),
+  servidorId: z.number().int().positive().optional().nullable(),
+  notas: z.string().max(2000).optional().nullable(),
+  activo: z.boolean().default(true),
+})
+
+export const certificadoUpdateSchema = certificadoSchema.partial()
+
+// ============================================
+// CAMBIOS VALIDATION
+// ============================================
+
+export const cambioSchema = z.object({
+  titulo: z.string().min(1, 'El título es requerido').max(255, 'Título muy largo'),
+  descripcion: z.string().min(1, 'La descripción es requerida').max(5000, 'Descripción muy larga'),
+  tipo: z.enum(['hardware', 'software', 'red', 'seguridad', 'otro']).default('otro'),
+  prioridad: z.enum(['baja', 'media', 'alta', 'critica']).default('media'),
+  estado: z.enum(['solicitado', 'aprobado', 'en_progreso', 'completado', 'rechazado', 'cancelado']).default('solicitado'),
+  solicitante: z.string().max(255).optional().nullable(),
+  responsable: z.string().max(255).optional().nullable(),
+  servidorId: z.number().int().positive().optional().nullable(),
+  fechaEjecucion: z.string().or(z.date()).optional().nullable(),
+  fechaCompletado: z.string().or(z.date()).optional().nullable(),
+})
+
+export const cambioUpdateSchema = cambioSchema.partial()
+
+// ============================================
+// BACKUPS PROGRAMADOS VALIDATION
+// ============================================
+
+export const backupProgramadoSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es requerido').max(255, 'Nombre muy largo'),
+  tipo: z.enum(['completo', 'incremental', 'diferencial']).default('completo'),
+  destino: z.string().min(1, 'El destino es requerido').max(500, 'Destino muy largo'),
+  servidorId: z.number().int().positive().optional().nullable(),
+  cronograma: z.string().min(1, 'El cronograma es requerido').max(100, 'Cronograma muy largo'),
+  retencionDias: z.number().int().min(1).max(365).default(30),
+  activo: z.boolean().default(true),
+})
+
+export const backupProgramadoUpdateSchema = backupProgramadoSchema.partial()
+
+// ============================================
+// COSTOS VALIDATION
+// ============================================
+
+export const costoSchema = z.object({
+  servidorId: z.number().int().positive().optional().nullable(),
+  tipo: z.enum(['hardware', 'software', 'licencia', 'mantenimiento', 'servicio', 'otro']).default('otro'),
+  descripcion: z.string().min(1, 'La descripción es requerida').max(500, 'Descripción muy larga'),
+  monto: z.number().min(0, 'El monto debe ser positivo'),
+  moneda: z.enum(['USD', 'EUR', 'COP']).default('USD'),
+  periodicidad: z.enum(['mensual', 'trimestral', 'semestral', 'anual', 'unico']).default('mensual'),
+  fechaInicio: z.string().min(1, 'La fecha de inicio es requerida'),
+  fechaFin: z.string().or(z.date()).optional().nullable(),
+  proveedorId: z.number().int().positive().optional().nullable(),
+  activo: z.boolean().default(true),
+})
+
+export const costoUpdateSchema = costoSchema.partial()
+
+// ============================================
+// SERVICIOS VALIDATION (MONITOR)
+// ============================================
+
+export const servicioSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es requerido').max(255, 'Nombre muy largo'),
+  tipo: z.enum(['http', 'https', 'tcp', 'ping', 'dns', 'smtp', 'pop3', 'ftp', 'ssh', 'rdp', 'otro']).default('http'),
+  url: z.string().max(500).optional().nullable(),
+  ip: z.string().max(45).optional().nullable(),
+  puerto: z.number().int().min(1).max(65535).optional().nullable(),
+  servidorId: z.number().int().positive().optional().nullable(),
+  intervaloMinutos: z.number().int().min(1).max(1440).default(5),
+  timeoutSegundos: z.number().int().min(1).max(60).default(10),
+  alertas: z.boolean().default(true),
+  activo: z.boolean().default(true),
+})
+
+export const servicioUpdateSchema = servicioSchema.partial()
+
+// ============================================
 // VALIDATION MIDDLEWARE
 // ============================================
 

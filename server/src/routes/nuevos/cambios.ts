@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../../prisma'
 import { authMiddleware, requireAdmin } from '../../middleware/auth'
 import { createAuditLog, getRequestInfo } from '../../services/auditLogService'
+import { validate, cambioSchema, cambioUpdateSchema } from '../../validations/index'
 
 const router = Router()
 
@@ -93,7 +94,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 })
 
 // Crear cambio
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(cambioSchema), async (req, res) => {
   try {
     const { titulo, descripcion, tipo, prioridad, solicitante, planRollback, serviciosAfectados, downtimeEstimado, notas } = req.body
     
@@ -331,7 +332,7 @@ router.post('/:id/cancelar', authMiddleware, async (req, res) => {
 })
 
 // Actualizar cambio
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, validate(cambioUpdateSchema), async (req, res) => {
   try {
     const { id } = req.params
     const { titulo, descripcion, tipo, prioridad, planRollback, serviciosAfectados, downtimeEstimado, notas } = req.body

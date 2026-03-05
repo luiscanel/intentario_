@@ -18,11 +18,12 @@ import {
   DialogTitle, 
   DialogFooter 
 } from '@/components/ui/dialog'
-import { getInventarioFisico, createInventarioFisico, updateInventarioFisico, deleteInventarioFisico, deleteInventarioFisicoBulk, importInventarioFisico } from '@/lib/api'
+import { getInventarioFisico, createInventarioFisico, updateInventarioFisico, deleteInventarioFisico, deleteInventarioFisicoBulk, importInventarioFisico, getDashboardPhysical } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
-import { Plus, Pencil, Trash2, Search, Download, Upload, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Download, Upload, Check, X, HardDrive, Package, Globe, User } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { usePermission } from '@/hooks/usePermission'
+import { StatCard, DonutChartCard, BarChartCard } from '@/components/charts/ModernCharts'
 
 const emptyItem = {
   pais: '',
@@ -42,6 +43,7 @@ const emptyItem = {
 export default function InventarioFisico() {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any>(null)
   const [search, setSearch] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
@@ -60,6 +62,7 @@ export default function InventarioFisico() {
 
   useEffect(() => {
     loadItems()
+    loadStats()
   }, [])
 
   const loadItems = async () => {
@@ -68,8 +71,18 @@ export default function InventarioFisico() {
       setItems(data)
     } catch (error) {
       console.error('Error:', error)
+      setItems([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadStats = async () => {
+    try {
+      const data = await getDashboardPhysical()
+      setStats(data)
+    } catch (error) {
+      console.error('Error loading stats:', error)
     }
   }
 
@@ -285,6 +298,54 @@ export default function InventarioFisico() {
             Nuevo
           </Button>
         </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Total Equipos"
+          value={stats?.totalEquipos || 0}
+          icon={HardDrive}
+          color="bg-gradient-to-br from-blue-500 to-blue-600"
+        />
+        <StatCard
+          title="Por Categoría"
+          value={stats?.porCategoria?.length || 0}
+          icon={Package}
+          color="bg-gradient-to-br from-purple-500 to-purple-600"
+          subtitle="categorías"
+        />
+        <StatCard
+          title="Por País"
+          value={stats?.porPais?.length || 0}
+          icon={Globe}
+          color="bg-gradient-to-br from-green-500 to-green-600"
+          subtitle="países"
+        />
+        <StatCard
+          title="Con IP"
+          value={stats?.conIp || 0}
+          icon={User}
+          color="bg-gradient-to-br from-orange-500 to-orange-600"
+          subtitle={`${stats?.sinIp || 0} sin IP`}
+        />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <DonutChartCard
+          data={stats?.porCategoria?.map((c: any) => ({ name: c.categoria, value: c.count })) || []}
+          colors={['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']}
+          title="Por Categoría"
+          icon={Package}
+          colorClass="bg-gradient-to-br from-blue-500 to-purple-500"
+        />
+        <BarChartCard
+          data={stats?.porPais?.slice(0, 8).map((p: any) => ({ name: p.pais, count: p.count })) || []}
+          title="Por País"
+          icon={Globe}
+          colorClass="bg-gradient-to-br from-green-500 to-emerald-500"
+        />
       </div>
 
       <Card>

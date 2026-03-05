@@ -3,6 +3,7 @@ import { prisma } from '../../prisma'
 import { authMiddleware, requireAdmin } from '../../middleware/auth'
 import { createAuditLog, getRequestInfo } from '../../services/auditLogService'
 import { sendEmail } from '../../services/email'
+import { validate, backupProgramadoSchema, backupProgramadoUpdateSchema } from '../../validations/index'
 
 const router = Router()
 
@@ -119,7 +120,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 })
 
 // Crear backup programado
-router.post('/', authMiddleware, requireAdmin, async (req, res) => {
+router.post('/', authMiddleware, requireAdmin, validate(backupProgramadoSchema), async (req, res) => {
   try {
     const { nombre, tipo, frecuencia, diaSemana, diaMes, hora, minuto, retenerDias, notificaciones, emailNotificacion } = req.body
     
@@ -159,7 +160,7 @@ router.post('/', authMiddleware, requireAdmin, async (req, res) => {
 })
 
 // Actualizar backup programado
-router.put('/:id', authMiddleware, requireAdmin, async (req, res) => {
+router.put('/:id', authMiddleware, requireAdmin, validate(backupProgramadoUpdateSchema), async (req, res) => {
   try {
     const { id } = req.params
     const { nombre, tipo, frecuencia, diaSemana, diaMes, hora, minuto, retenerDias, notificaciones, emailNotificacion, activo } = req.body
