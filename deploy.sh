@@ -99,11 +99,11 @@ log_step "Clonando proyecto desde GitHub..."
 
 # URL del repositorio - usar token si está definido
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
-REPO_URL="https://github.com/luiscanel/Host_Dedicado.git"
+REPO_URL="https://github.com/luiscanel/intentario_.git"
 
 if [ -n "$GITHUB_TOKEN" ]; then
     # Usar token para autenticación
-    REPO_URL="https://${GITHUB_TOKEN}@github.com/luiscanel/Host_Dedicado.git"
+    REPO_URL="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
     log_info "Usando token de GitHub para clonar"
 fi
 
@@ -140,9 +140,9 @@ NODE_ENV=production
 PORT=3001
 HOST=0.0.0.0
 JWT_SECRET=$JWT_SECRET
-JWT_EXPIRES_IN=24h
+JWT_EXPIRES_IN=15m
 DATABASE_URL=file:./prisma/dev.db
-CORS_ORIGIN=*
+CORS_ORIGIN=http://localhost:5174
 RATE_LIMIT_WINDOW_MS=15 minutes
 RATE_LIMIT_MAX_REQUESTS=100
 AUTH_RATE_LIMIT_MAX=5
