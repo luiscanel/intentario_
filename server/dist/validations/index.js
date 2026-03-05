@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.licenciaUpdateSchema = exports.licenciaSchema = exports.contratoUpdateSchema = exports.contratoSchema = exports.proveedorUpdateSchema = exports.proveedorSchema = exports.sendEmailSchema = exports.updateRolSchema = exports.createRolSchema = exports.updateUserSchema = exports.createUserSchema = exports.inventarioCloudImportSchema = exports.inventarioCloudUpdateSchema = exports.inventarioCloudSchema = exports.inventarioFisicoImportSchema = exports.inventarioFisicoUpdateSchema = exports.inventarioFisicoSchema = exports.bulkDeleteSchema = exports.servidorImportSchema = exports.servidorUpdateSchema = exports.servidorSchema = exports.loginSchema = void 0;
+exports.servicioUpdateSchema = exports.servicioSchema = exports.costoUpdateSchema = exports.costoSchema = exports.backupProgramadoUpdateSchema = exports.backupProgramadoSchema = exports.cambioUpdateSchema = exports.cambioSchema = exports.certificadoUpdateSchema = exports.certificadoSchema = exports.licenciaUpdateSchema = exports.licenciaSchema = exports.contratoUpdateSchema = exports.contratoSchema = exports.proveedorUpdateSchema = exports.proveedorSchema = exports.sendEmailSchema = exports.updateRolSchema = exports.createRolSchema = exports.updateUserSchema = exports.createUserSchema = exports.inventarioCloudImportSchema = exports.inventarioCloudUpdateSchema = exports.inventarioCloudSchema = exports.inventarioFisicoImportSchema = exports.inventarioFisicoUpdateSchema = exports.inventarioFisicoSchema = exports.bulkDeleteSchema = exports.servidorImportSchema = exports.servidorUpdateSchema = exports.servidorSchema = exports.loginSchema = void 0;
 exports.validate = validate;
 const zod_1 = require("zod");
 // ============================================
@@ -201,15 +201,16 @@ exports.proveedorUpdateSchema = exports.proveedorSchema.partial();
 // ============================================
 exports.contratoSchema = zod_1.z.object({
     proveedorId: zod_1.z.number().int().positive().optional().nullable(),
-    tipo: zod_1.z.string().min(1, 'El tipo es requerido').max(100),
+    tipo: zod_1.z.string().max(100).optional().nullable(),
     numero: zod_1.z.string().max(100).optional().nullable(),
     objeto: zod_1.z.string().max(1000).optional().nullable(),
     monto: zod_1.z.number().min(0).optional().nullable(),
     moneda: zod_1.z.string().max(10).optional(),
-    fechaInicio: zod_1.z.string().or(zod_1.z.date()),
-    fechaFin: zod_1.z.string().or(zod_1.z.date()),
+    fechaInicio: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
+    fechaFin: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
     estado: zod_1.z.string().max(50).optional(),
     observaciones: zod_1.z.string().max(2000).optional().nullable(),
+    diasAviso: zod_1.z.number().int().min(0).optional(),
 });
 exports.contratoUpdateSchema = exports.contratoSchema.partial();
 // ============================================
@@ -231,6 +232,82 @@ exports.licenciaSchema = zod_1.z.object({
     activa: zod_1.z.boolean().optional(),
 });
 exports.licenciaUpdateSchema = exports.licenciaSchema.partial();
+// ============================================
+// CERTIFICADOS SSL VALIDATION
+// ============================================
+exports.certificadoSchema = zod_1.z.object({
+    dominio: zod_1.z.string().min(1, 'El dominio es requerido').max(255, 'Dominio muy largo').regex(/^[a-zA-Z0-9\-\.]+$/, 'Dominio inválido'),
+    tipo: zod_1.z.enum(['single', 'wildcard', 'multi']).default('single'),
+    emisor: zod_1.z.string().max(255).optional().nullable(),
+    fechaEmision: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
+    fechaVencimiento: zod_1.z.string().min(1, 'La fecha de vencimiento es requerida'),
+    proveedorId: zod_1.z.number().int().positive().optional().nullable(),
+    servidorId: zod_1.z.number().int().positive().optional().nullable(),
+    notas: zod_1.z.string().max(2000).optional().nullable(),
+    activo: zod_1.z.boolean().default(true),
+});
+exports.certificadoUpdateSchema = exports.certificadoSchema.partial();
+// ============================================
+// CAMBIOS VALIDATION
+// ============================================
+exports.cambioSchema = zod_1.z.object({
+    titulo: zod_1.z.string().min(1, 'El título es requerido').max(255, 'Título muy largo'),
+    descripcion: zod_1.z.string().min(1, 'La descripción es requerida').max(5000, 'Descripción muy larga'),
+    tipo: zod_1.z.enum(['hardware', 'software', 'red', 'seguridad', 'otro']).default('otro'),
+    prioridad: zod_1.z.enum(['baja', 'media', 'alta', 'critica']).default('media'),
+    estado: zod_1.z.enum(['solicitado', 'aprobado', 'en_progreso', 'completado', 'rechazado', 'cancelado']).default('solicitado'),
+    solicitante: zod_1.z.string().max(255).optional().nullable(),
+    responsable: zod_1.z.string().max(255).optional().nullable(),
+    servidorId: zod_1.z.number().int().positive().optional().nullable(),
+    fechaEjecucion: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
+    fechaCompletado: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
+});
+exports.cambioUpdateSchema = exports.cambioSchema.partial();
+// ============================================
+// BACKUPS PROGRAMADOS VALIDATION
+// ============================================
+exports.backupProgramadoSchema = zod_1.z.object({
+    nombre: zod_1.z.string().min(1, 'El nombre es requerido').max(255, 'Nombre muy largo'),
+    tipo: zod_1.z.enum(['completo', 'incremental', 'diferencial']).default('completo'),
+    destino: zod_1.z.string().min(1, 'El destino es requerido').max(500, 'Destino muy largo'),
+    servidorId: zod_1.z.number().int().positive().optional().nullable(),
+    cronograma: zod_1.z.string().min(1, 'El cronograma es requerido').max(100, 'Cronograma muy largo'),
+    retencionDias: zod_1.z.number().int().min(1).max(365).default(30),
+    activo: zod_1.z.boolean().default(true),
+});
+exports.backupProgramadoUpdateSchema = exports.backupProgramadoSchema.partial();
+// ============================================
+// COSTOS VALIDATION
+// ============================================
+exports.costoSchema = zod_1.z.object({
+    servidorId: zod_1.z.number().int().positive().optional().nullable(),
+    tipo: zod_1.z.enum(['hardware', 'software', 'licencia', 'mantenimiento', 'servicio', 'otro']).default('otro'),
+    descripcion: zod_1.z.string().min(1, 'La descripción es requerida').max(500, 'Descripción muy larga'),
+    monto: zod_1.z.number().min(0, 'El monto debe ser positivo'),
+    moneda: zod_1.z.enum(['USD', 'EUR', 'COP']).default('USD'),
+    periodicidad: zod_1.z.enum(['mensual', 'trimestral', 'semestral', 'anual', 'unico']).default('mensual'),
+    fechaInicio: zod_1.z.string().min(1, 'La fecha de inicio es requerida'),
+    fechaFin: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
+    proveedorId: zod_1.z.number().int().positive().optional().nullable(),
+    activo: zod_1.z.boolean().default(true),
+});
+exports.costoUpdateSchema = exports.costoSchema.partial();
+// ============================================
+// SERVICIOS VALIDATION (MONITOR)
+// ============================================
+exports.servicioSchema = zod_1.z.object({
+    nombre: zod_1.z.string().min(1, 'El nombre es requerido').max(255, 'Nombre muy largo'),
+    tipo: zod_1.z.enum(['http', 'https', 'tcp', 'ping', 'dns', 'smtp', 'pop3', 'ftp', 'ssh', 'rdp', 'otro']).default('http'),
+    url: zod_1.z.string().max(500).optional().nullable(),
+    ip: zod_1.z.string().max(45).optional().nullable(),
+    puerto: zod_1.z.number().int().min(1).max(65535).optional().nullable(),
+    servidorId: zod_1.z.number().int().positive().optional().nullable(),
+    intervaloMinutos: zod_1.z.number().int().min(1).max(1440).default(5),
+    timeoutSegundos: zod_1.z.number().int().min(1).max(60).default(10),
+    alertas: zod_1.z.boolean().default(true),
+    activo: zod_1.z.boolean().default(true),
+});
+exports.servicioUpdateSchema = exports.servicioSchema.partial();
 function validate(schema) {
     return (req, res, next) => {
         try {

@@ -8,6 +8,17 @@ import { authMiddleware } from '../middleware/auth.js';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Helper function to sanitize filename and prevent path traversal
+function sanitizeFilename(originalName: string): string {
+  // Remove any path components
+  const basename = originalName.split('/').pop()?.split('\\').pop() || 'documento'
+  // Get only safe extension
+  const ext = path.extname(basename).toLowerCase().replace(/[^a-z0-9]/g, '')
+  // Create safe name without extension, then add safe extension
+  const nameWithoutExt = basename.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50)
+  return `${nameWithoutExt}${ext}`
+}
+
 // Configuración de multer para uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -18,8 +29,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
+    // Sanitize original filename to prevent path traversal
+    const safeName = sanitizeFilename(file.originalname)
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    cb(null, uniqueSuffix + path.extname(safeName));
   }
 });
 
@@ -27,13 +40,32 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /pdf|doc|docx|xls|xlsx|jpg|jpeg|png|txt/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname || mimetype) {
-      return cb(null, true);
+    // Allowed extensions
+    const allowedExtensions = /pdf|doc|docx|xls|xlsx|jpg|jpeg|png|txt/
+    // Block dangerous extensions
+    const blockedExtensions = /exe|sh|bat|cmd|ps1|js|jar|php|python|ruby|pl|cgi|html|htm|svg/
+    
+    const ext = path.extname(file.originalname).toLowerCase().slice(1)
+    const extname = allowedExtensions.test(ext)
+    const isBlocked = blockedExtensions.test(ext)
+    
+    // Check mimetype
+    const allowedMimes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/jpeg',
+      'image/png',
+      'text/plain'
+    ]
+    const mimetype = allowedMimes.includes(file.mimetype)
+    
+    if (extname && !isBlocked && mimetype) {
+      return cb(null, true)
     }
-    cb(new Error('Tipo de archivo no permitido'));
+    cb(new Error('Tipo de archivo no permitido'))
   }
 });
 

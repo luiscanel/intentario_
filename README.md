@@ -27,7 +27,28 @@ cd Inventario-Almo
 cp .env.example .env
 nano .env  # Editar con tus valores
 
-# 6. Ejecutar
+### ⚠️ CONFIGURACIÓN DE SEGURIDAD - CORS
+
+**Esto es CRÍTICO para producción.**
+
+CORS controla qué sitios web pueden acceder a tu API:
+
+| Configuración | Seguridad |
+|--------------|-----------|
+| `*` (wildcard) | ❌ INSEGURA |
+| `https://tu-dominio.com` | ✅ SEGURA |
+
+**En producción, el servidor NO arrancará si usas `*`.**
+
+```bash
+# Desarrollo
+CORS_ORIGIN=http://localhost:5174
+
+# Producción - IMPORTANTE: usar dominio real
+CORS_ORIGIN=https://inventario.grupoalmo.com
+```
+
+### 6. Ejecutar
 docker-compose up -d --build
 
 # 7. Verificar

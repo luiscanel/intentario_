@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     try {
         const licencias = await index_1.prisma.licencia.findMany({
             orderBy: { nombre: 'asc' },
-            include: { proveedor: true }
+            include: { proveedor: true, servidor: true }
         });
         res.json({ success: true, data: licencias });
     }

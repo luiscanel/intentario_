@@ -166,3 +166,38 @@
 2026-03-04 15:31:08 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
 2026-03-04 15:31:08 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
 2026-03-04 15:31:08 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 15:31:43 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 15:31:43 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 15:31:43 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 15:31:43 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 19:11:01 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 19:11:01 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"0ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 19:11:01 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 19:11:01 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"0ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:35:09 [WARN]: Request error {"method":"GET","path":"/api/backups-programados","status":404,"duration":"1ms","ip":"127.0.0.1","userAgent":"curl/8.5.0"}
+2026-03-04 22:35:28 [WARN]: Request error {"method":"GET","path":"/api/certificados","status":404,"duration":"0ms","ip":"127.0.0.1","userAgent":"curl/8.5.0"}
+2026-03-04 22:35:55 [WARN]: Request error {"method":"GET","path":"/api/certificados","status":404,"duration":"0ms","ip":"127.0.0.1","userAgent":"curl/8.5.0"}
+2026-03-04 22:36:10 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-04 22:36:22 [WARN]: Auth: No token provided {"path":"/","ip":"127.0.0.1"}
+2026-03-04 22:36:22 [WARN]: Request error {"method":"GET","path":"/","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"curl/8.5.0"}
+2026-03-04 22:40:40 [WARN]: Request error {"method":"GET","path":"/api/costos/estadisticas","status":404,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:40:40 [WARN]: Request error {"method":"GET","path":"/api/costos/estadisticas","status":404,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:41:06 [WARN]: Request error {"method":"GET","path":"/api/costos/estadisticas","status":404,"duration":"0ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:41:13 [WARN]: Request error {"method":"GET","path":"/api/costos/estadisticas","status":404,"duration":"0ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:41:21 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 22:41:21 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"0ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:41:21 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 22:41:21 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 22:42:41 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-04 22:42:53 [WARN]: Auth: No token provided {"path":"/estadisticas","ip":"127.0.0.1"}
+2026-03-04 22:42:53 [WARN]: Request error {"method":"GET","path":"/estadisticas","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"curl/8.5.0"}
+2026-03-04 23:12:57 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 23:12:57 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 23:12:57 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 23:12:57 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 23:12:59 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 23:12:59 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 23:16:12 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 23:16:12 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-04 23:16:12 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
+2026-03-04 23:16:12 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}

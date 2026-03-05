@@ -40,6 +40,7 @@ const express_1 = require("express");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const index_1 = require("../prisma/index");
 const auth_1 = require("../middleware/auth");
+const logger_js_1 = require("../utils/logger.js");
 const router = (0, express_1.Router)();
 router.use(auth_1.authMiddleware);
 router.use(auth_1.requireAdmin);
@@ -59,7 +60,7 @@ router.get('/modulos', async (req, res) => {
         res.json({ success: true, data: modulos });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al obtener módulos', code: 'FETCH_ERROR' });
     }
 });
@@ -94,7 +95,7 @@ router.post('/modulos', async (req, res) => {
         res.status(201).json({ success: true, data: modulo });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al crear módulo', code: 'CREATE_ERROR' });
     }
 });
@@ -117,7 +118,7 @@ router.put('/modulos/:id', async (req, res) => {
         res.json({ success: true, data: modulo });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al actualizar módulo', code: 'UPDATE_ERROR' });
     }
 });
@@ -138,7 +139,7 @@ router.delete('/modulos/:id', async (req, res) => {
         res.json({ success: true, message: 'Módulo eliminado correctamente' });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al eliminar módulo', code: 'DELETE_ERROR' });
     }
 });
@@ -165,7 +166,7 @@ router.get('/roles', async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al obtener roles', code: 'FETCH_ERROR' });
     }
 });
@@ -183,7 +184,7 @@ router.get('/permisos', async (req, res) => {
         res.json({ success: true, data: { modulos, grouped } });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al obtener permisos', code: 'FETCH_ERROR' });
     }
 });
@@ -209,7 +210,7 @@ router.post('/roles', async (req, res) => {
         res.status(201).json({ success: true, data: rol });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al crear rol', code: 'CREATE_ERROR' });
     }
 });
@@ -240,7 +241,7 @@ router.put('/roles/:id', async (req, res) => {
         res.json({ success: true, data: rol });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al actualizar rol', code: 'UPDATE_ERROR' });
     }
 });
@@ -268,7 +269,7 @@ router.delete('/roles/:id', async (req, res) => {
         res.json({ success: true, message: 'Rol eliminado correctamente' });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al eliminar rol', code: 'DELETE_ERROR' });
     }
 });
@@ -298,7 +299,7 @@ router.get('/usuarios', async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al obtener usuarios', code: 'FETCH_ERROR' });
     }
 });
@@ -360,7 +361,7 @@ router.post('/usuarios', async (req, res) => {
         if (error.code === 'P2002') {
             return res.status(400).json({ success: false, message: 'El email ya está registrado', code: 'DUPLICATE_EMAIL' });
         }
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al crear usuario', code: 'CREATE_ERROR' });
     }
 });
@@ -406,7 +407,7 @@ router.put('/usuarios/:id', async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al actualizar usuario', code: 'UPDATE_ERROR' });
     }
 });
@@ -422,7 +423,7 @@ router.delete('/usuarios/:id', async (req, res) => {
         res.json({ success: true, message: 'Usuario eliminado correctamente' });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al eliminar usuario', code: 'DELETE_ERROR' });
     }
 });
@@ -436,7 +437,7 @@ router.delete('/servidores', async (req, res) => {
         res.json({ success: true, message: 'Todos los servidores eliminados' });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al eliminar servidores', code: 'DELETE_ERROR' });
     }
 });
@@ -465,7 +466,7 @@ router.get('/audit', async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({ success: false, message: 'Error al obtener audit log', code: 'FETCH_ERROR' });
     }
 });

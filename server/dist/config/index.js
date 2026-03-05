@@ -12,8 +12,8 @@ const envSchema = zod_1.z.object({
     JWT_EXPIRES_IN: zod_1.z.string().default('24h'),
     // Database
     DATABASE_URL: zod_1.z.string().default('file:./prisma/dev.db'),
-    // CORS
-    CORS_ORIGIN: zod_1.z.string().default('*'),
+    // CORS - En producción DEBE especificarse el dominio exacto
+    CORS_ORIGIN: zod_1.z.string().default('http://localhost:5174'),
     // Rate Limiting
     RATE_LIMIT_WINDOW_MS: zod_1.z.string().default('15 minutes'),
     RATE_LIMIT_MAX_REQUESTS: zod_1.z.string().default('100'),
@@ -30,8 +30,16 @@ function loadConfig() {
     // Verificar variables críticas en producción
     const nodeEnv = process.env.NODE_ENV || 'development';
     if (nodeEnv === 'production') {
+        // Validar JWT_SECRET
         if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
             console.error('❌ ERROR: JWT_SECRET debe tener al menos 32 caracteres en producción');
+            process.exit(1);
+        }
+        // Validar CORS_ORIGIN - no puede ser * en producción
+        const corsOrigin = process.env.CORS_ORIGIN || '';
+        if (!corsOrigin || corsOrigin === '*') {
+            console.error('❌ ERROR: CORS_ORIGIN debe definirse con el dominio exacto en producción');
+            console.error('   Ejemplo: CORS_ORIGIN=https://inventario.grupoalmo.com');
             process.exit(1);
         }
     }

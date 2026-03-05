@@ -94,11 +94,22 @@ router.get('/backups/download/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
         const backupDir = process.env.BACKUP_DIR || '/app/backups';
-        const filePath = path_1.default.join(backupDir, filename);
+        // Sanitize filename to prevent path traversal
+        const safeFilename = sanitizeFilename(filename);
+        if (!safeFilename || !safeFilename.endsWith('.db.gz')) {
+            return res.status(400).json({ success: false, message: 'Nombre de archivo inválido' });
+        }
+        const filePath = path_1.default.join(backupDir, safeFilename);
+        // Verify the resolved path is within backupDir (prevent path traversal)
+        const resolvedPath = path_1.default.resolve(filePath);
+        const resolvedBackupDir = path_1.default.resolve(backupDir);
+        if (!resolvedPath.startsWith(resolvedBackupDir)) {
+            return res.status(400).json({ success: false, message: 'Ruta no permitida' });
+        }
         if (!fs_1.default.existsSync(filePath)) {
             return res.status(404).json({ success: false, message: 'Backup no encontrado' });
         }
-        res.download(filePath, filename);
+        res.download(filePath, safeFilename);
     }
     catch (error) {
         console.error('Error:', error);
@@ -111,7 +122,18 @@ router.post('/backups/restore', async (req, res) => {
         const { filename } = req.body;
         const backupDir = process.env.BACKUP_DIR || '/app/backups';
         const dbPath = process.env.DATABASE_URL?.replace('file:', '') || '/app/prisma/dev.db';
-        const backupPath = path_1.default.join(backupDir, filename);
+        // Sanitize filename to prevent path traversal
+        const safeFilename = sanitizeFilename(filename);
+        if (!safeFilename || !safeFilename.endsWith('.db.gz')) {
+            return res.status(400).json({ success: false, message: 'Nombre de archivo inválido' });
+        }
+        const backupPath = path_1.default.join(backupDir, safeFilename);
+        // Verify the resolved path is within backupDir (prevent path traversal)
+        const resolvedPath = path_1.default.resolve(backupPath);
+        const resolvedBackupDir = path_1.default.resolve(backupDir);
+        if (!resolvedPath.startsWith(resolvedBackupDir)) {
+            return res.status(400).json({ success: false, message: 'Ruta no permitida' });
+        }
         if (!fs_1.default.existsSync(backupPath)) {
             return res.status(404).json({ success: false, message: 'Backup no encontrado' });
         }
@@ -144,9 +166,20 @@ router.delete('/backups/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
         const backupDir = process.env.BACKUP_DIR || '/app/backups';
-        const baseName = filename.replace('.db.gz', '');
+        // Sanitize filename to prevent path traversal
+        const safeFilename = sanitizeFilename(filename);
+        if (!safeFilename || !safeFilename.endsWith('.db.gz')) {
+            return res.status(400).json({ success: false, message: 'Nombre de archivo inválido' });
+        }
+        const baseName = safeFilename.replace('.db.gz', '');
+        const filePath = path_1.default.join(backupDir, safeFilename);
+        // Verify the resolved path is within backupDir (prevent path traversal)
+        const resolvedPath = path_1.default.resolve(filePath);
+        const resolvedBackupDir = path_1.default.resolve(backupDir);
+        if (!resolvedPath.startsWith(resolvedBackupDir)) {
+            return res.status(400).json({ success: false, message: 'Ruta no permitida' });
+        }
         // Delete main file
-        const filePath = path_1.default.join(backupDir, filename);
         if (fs_1.default.existsSync(filePath)) {
             fs_1.default.unlinkSync(filePath);
         }
@@ -167,6 +200,13 @@ router.delete('/backups/:filename', async (req, res) => {
         res.status(500).json({ success: false, message: 'Error al eliminar backup', code: 'DELETE_ERROR' });
     }
 });
+// Helper function to sanitize filename and prevent path traversal
+function sanitizeFilename(filename) {
+    // Remove any path components
+    const basename = filename.split('/').pop()?.split('\\').pop() || '';
+    // Only allow safe characters
+    return basename.replace(/[^a-zA-Z0-9_\-\.]/g, '');
+}
 // Helper function
 function formatBytes(bytes) {
     if (bytes === 0)

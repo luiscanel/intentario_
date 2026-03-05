@@ -3,6 +3,54 @@
 
 ---
 
+## ⚠️ CONFIGURACIÓN DE SEGURIDAD - CORS
+
+**Esta sección es CRÍTICA para producción.**
+
+### ¿Qué es CORS?
+
+CORS (Cross-Origin Resource Sharing) controla qué sitios web pueden acceder a tu API.
+
+| Configuración | Seguridad |
+|--------------|-----------|
+| `*` (wildcard) | ❌ INSEGURA - Cualquier sitio puede acceder |
+| `https://tu-dominio.com` | ✅ SEGURA - Solo tu dominio puede acceder |
+
+### Configuración por Entorno
+
+#### Desarrollo (local)
+```bash
+# server/.env
+CORS_ORIGIN=http://localhost:5174
+```
+
+#### Producción (servidor real)
+```bash
+# server/.env - IMPORTANTE: Usar dominio real, NO *
+CORS_ORIGIN=https://inventario.grupoalmo.com
+```
+
+### ⚠️ Error Común en Producción
+
+Si en producción pones:
+```bash
+CORS_ORIGIN=*
+```
+
+El servidor **NO ARRANCARÁ** y mostrará:
+```
+❌ ERROR: CORS_ORIGIN debe definirse con el dominio exacto en producción
+```
+
+### Múltiples Dominios
+
+Puedes especificar varios dominios separados por coma:
+```bash
+CORS_ORIGIN=https://inventario.grupoalmo.com,https://admin.grupoalmo.com
+```
+
+---
+
 ## Información General
 
 | Campo | Valor |

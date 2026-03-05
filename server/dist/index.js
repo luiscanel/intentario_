@@ -22,10 +22,18 @@ const contratos_1 = __importDefault(require("./routes/contratos"));
 const alertas_1 = __importDefault(require("./routes/alertas"));
 const monitor_1 = __importDefault(require("./routes/monitor"));
 const documentos_1 = __importDefault(require("./routes/documentos"));
+// Nuevas rutas de módulos
+const certificados_1 = __importDefault(require("./routes/nuevos/certificados"));
+const cambios_1 = __importDefault(require("./routes/nuevos/cambios"));
+const backups_1 = __importDefault(require("./routes/nuevos/backups"));
+const costos_1 = __importDefault(require("./routes/nuevos/costos"));
+const monitor_2 = __importDefault(require("./routes/nuevos/monitor"));
 // Importar configuración y seguridad
 const index_js_1 = require("./config/index.js");
 const logger_js_1 = require("./utils/logger.js");
 const security_js_1 = require("./middleware/security.js");
+// Importar servicio de notificaciones
+const notificacionesService_js_1 = require("./services/notificacionesService.js");
 // Cargar variables de entorno
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -46,8 +54,32 @@ app.use((0, cors_1.default)(security_js_1.corsOptions));
 app.use(express_1.default.json({ limit: '10mb' }));
 // Parser para form data
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
-// Archivos estáticos (uploads)
-app.use('/uploads', express_1.default.static(path_1.default.join(process.cwd(), 'uploads')));
+// Archivos estáticos (uploads) - con restricciones de seguridad
+app.use('/uploads', (req, res, next) => {
+    // Restringir MIME types permitidos
+    const allowedMimes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'image/jpeg',
+        'image/png',
+        'text/plain'
+    ];
+    const fileExt = req.path.split('.').pop()?.toLowerCase();
+    const allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'txt'];
+    // Solo permitir extensiones conocidas
+    if (fileExt && !allowedExts.includes(fileExt)) {
+        return res.status(403).json({ success: false, message: 'Tipo de archivo no permitido' });
+    }
+    next();
+}, express_1.default.static(path_1.default.join(process.cwd(), 'uploads'), {
+    maxAge: '1h',
+    dotfiles: 'ignore',
+    etag: true,
+    extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'txt']
+}));
 // Logging de requests
 app.use(security_js_1.requestLogger);
 // ============================================
@@ -72,6 +104,12 @@ app.use('/api/contratos', contratos_1.default);
 app.use('/api/alertas', alertas_1.default);
 app.use('/api/monitor', monitor_1.default);
 app.use('/api/documentos', documentos_1.default);
+// Nuevos módulos
+app.use('/api/certificados', certificados_1.default);
+app.use('/api/cambios', cambios_1.default);
+app.use('/api/backups-programados', backups_1.default);
+app.use('/api/costos', costos_1.default);
+app.use('/api/servicios', monitor_2.default);
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -96,4 +134,8 @@ app.listen(PORT, HOST, () => {
         host: HOST,
         rateLimit: `${index_js_1.config.RATE_LIMIT_MAX_REQUESTS} req/${index_js_1.config.RATE_LIMIT_WINDOW_MS}`
     });
+    // Iniciar servicio de notificaciones programadas (solo en producción o si está habilitado)
+    if (index_js_1.config.NODE_ENV === 'production' || process.env.ENABLE_NOTIFICATIONS === 'true') {
+        (0, notificacionesService_js_1.startNotificationService)();
+    }
 });

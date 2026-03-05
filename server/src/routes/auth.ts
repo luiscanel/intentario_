@@ -13,14 +13,37 @@ const router = Router()
 // El middleware de autenticación NO se aplica aquí porque /login debe ser público
 // Las demás rutas que requieren auth se protegen individualmente
 
-// Generar contraseña temporal
+// Generar contraseña temporal segura
 function generateTempPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
-  let password = ''
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  // Usar crypto-safe random en lugar de Math.random()
+  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const lowercase = 'abcdefghjkmnpqrstuvwxyz'
+  const numbers = '23456789'
+  const special = '!@#$%'
+  
+  // Asegurar al menos un carácter de cada tipo
+  const getRandomChar = (chars: string) => {
+    const array = new Uint32Array(1)
+    crypto.getRandomValues(array)
+    return chars[array[0] % chars.length]
   }
-  return password
+  
+  let password = ''
+  password += getRandomChar(uppercase)  // Al menos una mayúscula
+  password += getRandomChar(lowercase)  // Al menos una minúscula
+  password += getRandomChar(numbers)    // Al menos un número
+  password += getRandomChar(special)    // Al menos un especial
+  
+  // Llenar el resto hasta 12 caracteres
+  const allChars = uppercase + lowercase + numbers + special
+  for (let i = 4; i < 12; i++) {
+    const array = new Uint32Array(1)
+    crypto.getRandomValues(array)
+    password += allChars[array[0] % allChars.length]
+  }
+  
+  // Mezclar la contraseña
+  return password.split('').sort(() => Math.random() - 0.5).join('')
 }
 
 router.post('/login', validate(loginSchema), async (req, res) => {
@@ -59,14 +82,77 @@ router.post('/login', validate(loginSchema), async (req, res) => {
       })
     }
 
+    // Verificar si la cuenta está bloqueada
+    if (usuario.bloqueadoHasta && usuario.bloqueadoHasta > new Date()) {
+      const tiempoRestante = Math.ceil((usuario.bloqueadoHasta.getTime() - Date.now()) / 1000 / 60)
+      return res.status(423).json({ 
+        success: false,
+        message: `Cuenta bloqueada temporalmente. Intente en ${tiempoRestante} minutos.`,
+        code: 'ACCOUNT_LOCKED'
+      })
+    }
+
     const validPassword = await bcrypt.compare(password, usuario.password)
     if (!validPassword) {
+      // Incrementar intentos de login fallidos
+      const nuevosIntentos = (usuario.intentosLogin || 0) + 1
+      const ahora = new Date()
+      
+      // Si supera 5 intentos, bloquear por 15 minutos
+      let datosActualizacion: any = {
+        intentosLogin: nuevosIntentos,
+        ultimoIntento: ahora
+      }
+      
+      if (nuevosIntentos >= 5) {
+        const tiempoBloqueo = new Date(ahora.getTime() + 15 * 60 * 1000) // 15 minutos
+        datosActualizacion.bloqueadoHasta = tiempoBloqueo
+        datosActualizacion.intentosLogin = 0 // Resetear contador tras bloquear
+        
+        // Registrar intento fallido en audit log
+        createAuditLog({
+          usuarioId: usuario.id,
+          usuario: usuario.email,
+          accion: 'login_failed',
+          entidad: 'User',
+          entidadId: usuario.id,
+          datosNuevos: { intentos: nuevosIntentos, motivo: 'Demasiados intentos fallidos' },
+          ...getRequestInfo(req)
+        })
+        
+        await prisma.user.update({
+          where: { id: usuario.id },
+          data: datosActualizacion
+        })
+        
+        return res.status(423).json({ 
+          success: false,
+          message: 'Cuenta bloqueada por múltiples intentos fallidos. Intente en 15 minutos.',
+          code: 'ACCOUNT_LOCKED'
+        })
+      }
+      
+      await prisma.user.update({
+        where: { id: usuario.id },
+        data: datosActualizacion
+      })
+      
       return res.status(401).json({ 
         success: false,
         message: 'Credenciales inválidas',
         code: 'INVALID_CREDENTIALS'
       })
     }
+
+    // Login exitoso: resetear contador de intentos
+    await prisma.user.update({
+      where: { id: usuario.id },
+      data: {
+        intentosLogin: 0,
+        bloqueadoHasta: null,
+        ultimoIntento: new Date()
+      }
+    })
 
     // Extraer permisos únicos (de roles -> módulos -> permisos)
     const permisosSet = new Set<string>()

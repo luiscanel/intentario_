@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { getInventarioCloud, createInventarioCloud, updateInventarioCloud, deleteInventarioCloud, importInventarioCloud, bulkDeleteInventarioCloud } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import { InventarioCloud } from "@/types/api"
-import { Plus, Pencil, Trash2, Search, Download, Upload, Columns2, Check, X, Cloud } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Download, Upload, Columns2, Check, X, Cloud, DollarSign, TrendingUp } from "lucide-react"
 import * as XLSX from "xlsx"
 import { usePermission } from "@/hooks/usePermission"
 
@@ -174,6 +174,15 @@ export default function InventoryCloud() {
     }
   }
 
+  // Calcular costos
+  const costoTotal = items.reduce((sum, item) => sum + (parseFloat(item.costoUsd || '0') || 0), 0)
+  const costosPorNube = items.reduce((acc, item) => {
+    const nube = item.nube || 'Otro'
+    acc[nube] = (acc[nube] || 0) + (parseFloat(item.costoUsd || '0') || 0)
+    return acc
+  }, {} as Record<string, number>)
+  const costoPorInstancia = items.length > 0 ? costoTotal / items.length : 0
+
   const toggleColumn = (key: string) => { setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]) }
 
   const renderCell = (item: InventarioCloud, key: string) => {
@@ -208,6 +217,56 @@ export default function InventoryCloud() {
           )}
           <Button onClick={() => { setFormData(emptyItem); setEditingItem(null); setIsDialogOpen(true) }} disabled={!canCreate}><Plus className="w-4 h-4 mr-2" />Nueva Instancia</Button>
         </div>
+      </div>
+
+      {/* Resumen de Costos */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm">Costo Mensual Total</p>
+                <p className="text-3xl font-bold">${costoTotal.toFixed(2)}</p>
+              </div>
+              <DollarSign className="w-10 h-10 text-blue-200" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Instancias</p>
+                <p className="text-2xl font-bold">{items.length}</p>
+              </div>
+              <Cloud className="w-10 h-10 text-gray-300" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Promedio por Instancia</p>
+                <p className="text-2xl font-bold">${costoPorInstancia.toFixed(2)}</p>
+              </div>
+              <TrendingUp className="w-10 h-10 text-gray-300" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-muted-foreground text-sm mb-2">Por Proveedor</p>
+            <div className="space-y-1">
+              {Object.entries(costosPorNube).map(([nube, costo]) => (
+                <div key={nube} className="flex justify-between text-sm">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getNubeColor(nube)}`}>{nube}</span>
+                  <span className="font-medium">${costo.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

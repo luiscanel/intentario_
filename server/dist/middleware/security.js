@@ -60,6 +60,8 @@ exports.authRateLimiter = (0, express_rate_limit_1.default)({
         code: 'AUTH_RATE_LIMIT_EXCEEDED'
     },
     skip: (req) => {
+        // Skip: false = aplicar rate limit, true = no aplicar
+        // Se aplica solo a rutas de login dentro de /api/auth
         return !req.path.includes('/auth/login');
     }
 });
@@ -67,7 +69,28 @@ exports.authRateLimiter = (0, express_rate_limit_1.default)({
 // CORS - Configuración
 // ============================================
 exports.corsOptions = {
-    origin: index_js_1.securityConfig.corsOrigin,
+    origin: (origin, callback) => {
+        const allowedOrigins = index_js_1.securityConfig.corsOrigin.split(',').map(o => o.trim());
+        // En desarrollo, permitir sin origin header
+        if (!origin) {
+            if (index_js_1.securityConfig.isProduction) {
+                return callback(new Error('CORS: No origin provided'), false);
+            }
+            return callback(null, true);
+        }
+        // Verificar si el origin está permitido
+        if (allowedOrigins.includes('*')) {
+            // En producción, no permitir wildcard
+            if (index_js_1.securityConfig.isProduction) {
+                return callback(new Error('CORS: Wildcard not allowed in production'), false);
+            }
+            return callback(null, true);
+        }
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('CORS: Origin not allowed'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

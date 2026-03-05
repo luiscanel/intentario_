@@ -18,6 +18,13 @@ import alertasRoutes from './routes/alertas'
 import monitorRoutes from './routes/monitor'
 import documentosRoutes from './routes/documentos'
 
+// Nuevas rutas de módulos
+import certificadosRoutes from './routes/nuevos/certificados'
+import cambiosRoutes from './routes/nuevos/cambios'
+import backupsProgramadosRoutes from './routes/nuevos/backups'
+import costosRoutes from './routes/nuevos/costos'
+import serviciosRoutes from './routes/nuevos/monitor'
+
 // Importar configuración y seguridad
 import { config } from './config/index.js'
 import { log } from './utils/logger.js'
@@ -29,6 +36,9 @@ import {
   errorHandler,
   requestLogger
 } from './middleware/security.js'
+
+// Importar servicio de notificaciones
+import { startNotificationService } from './services/notificacionesService.js'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -59,8 +69,35 @@ app.use(express.json({ limit: '10mb' }))
 // Parser para form data
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Archivos estáticos (uploads)
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+// Archivos estáticos (uploads) - con restricciones de seguridad
+app.use('/uploads', (req, res, next) => {
+  // Restringir MIME types permitidos
+  const allowedMimes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'image/jpeg',
+    'image/png',
+    'text/plain'
+  ]
+  
+  const fileExt = req.path.split('.').pop()?.toLowerCase()
+  const allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'txt']
+  
+  // Solo permitir extensiones conocidas
+  if (fileExt && !allowedExts.includes(fileExt)) {
+    return res.status(403).json({ success: false, message: 'Tipo de archivo no permitido' })
+  }
+  
+  next()
+}, express.static(path.join(process.cwd(), 'uploads'), {
+  maxAge: '1h',
+  dotfiles: 'ignore',
+  etag: true,
+  extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'txt']
+}))
 
 // Logging de requests
 app.use(requestLogger)
@@ -92,6 +129,13 @@ app.use('/api/alertas', alertasRoutes)
 app.use('/api/monitor', monitorRoutes)
 app.use('/api/documentos', documentosRoutes)
 
+// Nuevos módulos
+app.use('/api/certificados', certificadosRoutes)
+app.use('/api/cambios', cambiosRoutes)
+app.use('/api/backups-programados', backupsProgramadosRoutes)
+app.use('/api/costos', costosRoutes)
+app.use('/api/servicios', serviciosRoutes)
+
 // ============================================
 // HEALTH CHECK
 // ============================================
@@ -118,4 +162,9 @@ app.listen(PORT, HOST, () => {
     host: HOST,
     rateLimit: `${config.RATE_LIMIT_MAX_REQUESTS} req/${config.RATE_LIMIT_WINDOW_MS}`
   })
+  
+  // Iniciar servicio de notificaciones programadas (solo en producción o si está habilitado)
+  if (config.NODE_ENV === 'production' || process.env.ENABLE_NOTIFICATIONS === 'true') {
+    startNotificationService()
+  }
 })

@@ -55,12 +55,6 @@ const secciones = [
     ]
   },
   {
-    titulo: 'Finanzas',
-    items: [
-      // Los costos ahora se ven en Inventario Cloud
-    ]
-  },
-  {
     titulo: 'Sistema',
     items: [
       { to: '/alertas', icon: Bell, label: 'Alertas', permiso: null },
