@@ -150,7 +150,8 @@ router.post('/login', validate(loginSchema), async (req, res) => {
       data: {
         intentosLogin: 0,
         bloqueadoHasta: null,
-        ultimoIntento: new Date()
+        ultimoIntento: new Date(),
+        ultimoAccesoActivo: new Date()
       }
     })
 
@@ -181,11 +182,11 @@ router.post('/login', validate(loginSchema), async (req, res) => {
     // Extraer nombres de roles
     const roles = usuario.usuarioRoles.map(ur => ur.rol.nombre)
 
-    // Generar token JWT
+    // Generar token JWT (15 min para mayor seguridad)
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email, rol: usuario.rol },
       config.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '15m' }
     )
 
     res.json({
@@ -218,6 +219,51 @@ router.post('/login', validate(loginSchema), async (req, res) => {
       message: 'Error del servidor',
       code: 'SERVER_ERROR'
     })
+  }
+})
+
+// Renovar token y mantener sesión activa
+router.post('/refresh', authMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).user?.id
+    
+    // Actualizar último acceso activo
+    await prisma.user.update({
+      where: { id: userId },
+      data: { ultimoAccesoActivo: new Date() }
+    })
+    
+    // Generar nuevo token
+    const usuario = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        usuarioRoles: {
+          include: {
+            rol: {
+              include: {
+                permisos: { include: { modulo: true } },
+                roles: { include: { modulo: true } }
+              }
+            }
+          }
+        }
+      }
+    })
+    
+    if (!usuario) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' })
+    }
+    
+    const token = jwt.sign(
+      { id: usuario.id, email: usuario.email, rol: usuario.rol },
+      config.JWT_SECRET,
+      { expiresIn: '15m' }
+    )
+    
+    res.json({ success: true, token })
+  } catch (error) {
+    console.error('Refresh error:', error)
+    res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' })
   }
 })
 

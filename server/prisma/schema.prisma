@@ -78,6 +78,7 @@ model User {
   intentosLogin     Int           @default(0)       // Contador de intentos fallidos
   bloqueadoHasta    DateTime?     // Cuándo se desbloqueará la cuenta
   ultimoIntento     DateTime?     // Último intento de login
+  ultimoAccesoActivo DateTime?    // Último acceso activo (para timeout por inactividad)
   usuarioRoles      UsuarioRol[]
   sesiones          Sesion[]
   createdAt         DateTime      @default(now())

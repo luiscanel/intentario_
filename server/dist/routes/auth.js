@@ -134,7 +134,8 @@ router.post('/login', (0, index_js_2.validate)(index_js_2.loginSchema), async (r
             data: {
                 intentosLogin: 0,
                 bloqueadoHasta: null,
-                ultimoIntento: new Date()
+                ultimoIntento: new Date(),
+                ultimoAccesoActivo: new Date()
             }
         });
         // Extraer permisos únicos (de roles -> módulos -> permisos)
@@ -161,8 +162,8 @@ router.post('/login', (0, index_js_2.validate)(index_js_2.loginSchema), async (r
         }
         // Extraer nombres de roles
         const roles = usuario.usuarioRoles.map(ur => ur.rol.nombre);
-        // Generar token JWT
-        const token = jsonwebtoken_1.default.sign({ id: usuario.id, email: usuario.email, rol: usuario.rol }, index_js_1.config.JWT_SECRET, { expiresIn: '24h' });
+        // Generar token JWT (15 min para mayor seguridad)
+        const token = jsonwebtoken_1.default.sign({ id: usuario.id, email: usuario.email, rol: usuario.rol }, index_js_1.config.JWT_SECRET, { expiresIn: '15m' });
         res.json({
             success: true,
             token,
@@ -193,6 +194,42 @@ router.post('/login', (0, index_js_2.validate)(index_js_2.loginSchema), async (r
             message: 'Error del servidor',
             code: 'SERVER_ERROR'
         });
+    }
+});
+// Renovar token y mantener sesión activa
+router.post('/refresh', auth_js_1.authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        // Actualizar último acceso activo
+        await index_1.prisma.user.update({
+            where: { id: userId },
+            data: { ultimoAccesoActivo: new Date() }
+        });
+        // Generar nuevo token
+        const usuario = await index_1.prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                usuarioRoles: {
+                    include: {
+                        rol: {
+                            include: {
+                                permisos: { include: { modulo: true } },
+                                roles: { include: { modulo: true } }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        if (!usuario) {
+            return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+        }
+        const token = jsonwebtoken_1.default.sign({ id: usuario.id, email: usuario.email, rol: usuario.rol }, index_js_1.config.JWT_SECRET, { expiresIn: '15m' });
+        res.json({ success: true, token });
+    }
+    catch (error) {
+        console.error('Refresh error:', error);
+        res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' });
     }
 });
 // Cambiar propia contraseña (usuario logueado)

@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import path from 'path'
+import compression from 'compression'
+import http from 'http'
 import authRoutes from './routes/auth'
 import servidoresRoutes from './routes/servidores'
 import inventarioFisicoRoutes from './routes/inventarioFisico'
@@ -39,6 +41,8 @@ import {
 
 // Importar servicio de notificaciones
 import { startNotificationService } from './services/notificacionesService.js'
+import { cacheService } from './services/cacheService.js'
+import { requestTimeout } from './middleware/timeout.js'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -68,6 +72,12 @@ app.use(express.json({ limit: '10mb' }))
 
 // Parser para form data
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Compresión gzip para respuestas
+app.use(compression({
+  threshold: 1024,
+  level: 6,
+}))
 
 // Archivos estáticos (uploads) - con restricciones de seguridad
 app.use('/uploads', (req, res, next) => {
@@ -155,7 +165,7 @@ app.use(errorHandler)
 // ============================================
 // INICIO DEL SERVIDOR
 // ============================================
-app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, () => {
   log.info(`Inventario Almo iniciado`, {
     environment: config.NODE_ENV,
     port: PORT,
@@ -168,3 +178,41 @@ app.listen(PORT, HOST, () => {
     startNotificationService()
   }
 })
+
+// ============================================
+// GRACEFUL SHUTDOWN
+// ============================================
+function gracefulShutdown(signal: string) {
+  log.info(`Recibida señal ${signal}. Cerrando servidor...`)
+  
+  server.close((err) => {
+    if (err) {
+      log.error('Error al cerrar servidor', { error: err.message })
+      process.exit(1)
+    }
+    
+    log.info('Servidor cerrado correctamente')
+    
+    // Cerrar conexiones de BD
+    import('./prisma/index.js').then(({ prisma }) => {
+      prisma.$disconnect()
+        .then(() => {
+          log.info('Conexiones de BD cerradas')
+          process.exit(0)
+        })
+        .catch((e) => {
+          log.error('Error al cerrar BD', { error: e })
+          process.exit(1)
+        })
+    })
+  })
+  
+  // Force close después de 30 segundos
+  setTimeout(() => {
+    log.error('Forzando cierre después de 30 segundos')
+    process.exit(1)
+  }, 30000)
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))

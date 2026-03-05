@@ -23,4 +23,24 @@ export default defineConfig({
     port: 5174,
     host: '0.0.0.0',
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-label',
+            '@radix-ui/react-select',
+            '@radix-ui/react-slot',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toast',
+          ],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['xlsx', 'lucide-react', 'clsx', 'tailwind-merge'],
+        },
+      },
+    },
+  },
 })

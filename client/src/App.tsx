@@ -2,27 +2,39 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from './components/ui/toaster'
 import { useAuthStore } from './store/authStore'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import DashboardSeguridad from './pages/DashboardSeguridad'
-import DashboardRecursos from './pages/DashboardRecursos'
-import DashboardDisponibilidad from './pages/DashboardDisponibilidad'
-import DashboardResponsables from './pages/DashboardResponsables'
-import Inventory from './pages/Inventory'
-import InventarioFisico from './pages/InventarioFisico'
-import InventoryCloud from './pages/InventoryCloud'
-import Reports from './pages/Reports'
-import Admin from './pages/Admin'
-import Proveedores from './pages/Proveedores'
-import Licencias from './pages/Licencias'
-import Contratos from './pages/Contratos'
-import Alertas from './pages/Alertas'
-import Monitor from './pages/Monitor'
-import AuditLog from './pages/AuditLog'
-// Nuevos módulos
-import Certificados from './pages/Certificados'
-import Cambios from './pages/Cambios'
-import Backups from './pages/Backups'
 import Layout from './components/layout/Layout'
+import { Suspense, lazy } from 'react'
+import { Loader2 } from 'lucide-react'
+
+// Lazy loading para todas las páginas
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const DashboardSeguridad = lazy(() => import('./pages/DashboardSeguridad'))
+const DashboardRecursos = lazy(() => import('./pages/DashboardRecursos'))
+const DashboardDisponibilidad = lazy(() => import('./pages/DashboardDisponibilidad'))
+const DashboardResponsables = lazy(() => import('./pages/DashboardResponsables'))
+const Inventory = lazy(() => import('./pages/Inventory'))
+const InventarioFisico = lazy(() => import('./pages/InventarioFisico'))
+const InventoryCloud = lazy(() => import('./pages/InventoryCloud'))
+const Reports = lazy(() => import('./pages/Reports'))
+const Admin = lazy(() => import('./pages/Admin'))
+const Proveedores = lazy(() => import('./pages/Proveedores'))
+const Licencias = lazy(() => import('./pages/Licencias'))
+const Contratos = lazy(() => import('./pages/Contratos'))
+const Alertas = lazy(() => import('./pages/Alertas'))
+const Monitor = lazy(() => import('./pages/Monitor'))
+const AuditLog = lazy(() => import('./pages/AuditLog'))
+const Certificados = lazy(() => import('./pages/Certificados'))
+const Cambios = lazy(() => import('./pages/Cambios'))
+const Backups = lazy(() => import('./pages/Backups'))
+
+// Componente de carga
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  )
+}
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -42,25 +54,25 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Dashboard />} />
-          <Route path="seguridad" element={<DashboardSeguridad />} />
-          <Route path="recursos" element={<DashboardRecursos />} />
-          <Route path="disponibilidad" element={<DashboardDisponibilidad />} />
-          <Route path="responsables" element={<DashboardResponsables />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="inventario-cloud" element={<InventoryCloud />} />
-          <Route path="inventario-fisico" element={<InventarioFisico />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="admin" element={<Admin />} />
-          <Route path="proveedores" element={<Proveedores />} />
-          <Route path="licencias" element={<Licencias />} />
-          <Route path="contratos" element={<Contratos />} />
-          <Route path="alertas" element={<Alertas />} />
-          <Route path="monitor" element={<Monitor />} />
-          <Route path="audit-log" element={<AuditLog />} />
-          <Route path="certificados" element={<Certificados />} />
-          <Route path="cambios" element={<Cambios />} />
-          <Route path="backups" element={<Backups />} />
+          <Route index element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+          <Route path="seguridad" element={<Suspense fallback={<PageLoader />}><DashboardSeguridad /></Suspense>} />
+          <Route path="recursos" element={<Suspense fallback={<PageLoader />}><DashboardRecursos /></Suspense>} />
+          <Route path="disponibilidad" element={<Suspense fallback={<PageLoader />}><DashboardDisponibilidad /></Suspense>} />
+          <Route path="responsables" element={<Suspense fallback={<PageLoader />}><DashboardResponsables /></Suspense>} />
+          <Route path="inventory" element={<Suspense fallback={<PageLoader />}><Inventory /></Suspense>} />
+          <Route path="inventario-cloud" element={<Suspense fallback={<PageLoader />}><InventoryCloud /></Suspense>} />
+          <Route path="inventario-fisico" element={<Suspense fallback={<PageLoader />}><InventarioFisico /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<PageLoader />}><Reports /></Suspense>} />
+          <Route path="admin" element={<Suspense fallback={<PageLoader />}><Admin /></Suspense>} />
+          <Route path="proveedores" element={<Suspense fallback={<PageLoader />}><Proveedores /></Suspense>} />
+          <Route path="licencias" element={<Suspense fallback={<PageLoader />}><Licencias /></Suspense>} />
+          <Route path="contratos" element={<Suspense fallback={<PageLoader />}><Contratos /></Suspense>} />
+          <Route path="alertas" element={<Suspense fallback={<PageLoader />}><Alertas /></Suspense>} />
+          <Route path="monitor" element={<Suspense fallback={<PageLoader />}><Monitor /></Suspense>} />
+          <Route path="audit-log" element={<Suspense fallback={<PageLoader />}><AuditLog /></Suspense>} />
+          <Route path="certificados" element={<Suspense fallback={<PageLoader />}><Certificados /></Suspense>} />
+          <Route path="cambios" element={<Suspense fallback={<PageLoader />}><Cambios /></Suspense>} />
+          <Route path="backups" element={<Suspense fallback={<PageLoader />}><Backups /></Suspense>} />
         </Route>
       </Routes>
       <Toaster />

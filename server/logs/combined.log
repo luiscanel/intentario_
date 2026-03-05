@@ -201,3 +201,11 @@
 2026-03-04 23:16:12 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"1ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
 2026-03-04 23:16:12 [WARN]: Auth: No token provided {"path":"/config","ip":"127.0.0.1"}
 2026-03-04 23:16:12 [WARN]: Request error {"method":"GET","path":"/config","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-05 14:44:46 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 14:45:10 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 14:47:42 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 14:47:49 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 14:48:14 [INFO]: Recibida señal SIGTERM. Cerrando servidor...
+2026-03-05 14:48:15 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 14:50:10 [INFO]: Recibida señal SIGTERM. Cerrando servidor...
+2026-03-05 14:50:10 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}

@@ -8,12 +8,16 @@ import {
   getResponsablesStats,
   getCloudStats
 } from '../services/dashboardService'
+import { cacheMiddleware, invalidateCache } from '../services/cacheService'
 
 const router = Router()
 
 router.use(authMiddleware)
 
-router.get('/security', async (req, res) => {
+// Cache de 5 minutos para dashboards (se puede ajustar)
+const dashboardCache = cacheMiddleware(5 * 60 * 1000)
+
+router.get('/security', dashboardCache, async (req, res) => {
   try {
     const stats = await getSecurityStats()
     res.json(stats)
@@ -23,7 +27,7 @@ router.get('/security', async (req, res) => {
   }
 })
 
-router.get('/resources', async (req, res) => {
+router.get('/resources', dashboardCache, async (req, res) => {
   try {
     const stats = await getResourcesStats()
     res.json(stats)
@@ -33,7 +37,7 @@ router.get('/resources', async (req, res) => {
   }
 })
 
-router.get('/availability', async (req, res) => {
+router.get('/availability', dashboardCache, async (req, res) => {
   try {
     const stats = await getAvailabilityStats()
     res.json(stats)
@@ -43,7 +47,7 @@ router.get('/availability', async (req, res) => {
   }
 })
 
-router.get('/physical', async (req, res) => {
+router.get('/physical', dashboardCache, async (req, res) => {
   try {
     const stats = await getPhysicalStats()
     res.json(stats)
@@ -53,7 +57,7 @@ router.get('/physical', async (req, res) => {
   }
 })
 
-router.get('/responsables', async (req, res) => {
+router.get('/responsables', dashboardCache, async (req, res) => {
   try {
     const stats = await getResponsablesStats()
     res.json(stats)
@@ -63,13 +67,24 @@ router.get('/responsables', async (req, res) => {
   }
 })
 
-router.get('/cloud', async (req, res) => {
+router.get('/cloud', dashboardCache, async (req, res) => {
   try {
     const stats = await getCloudStats()
     res.json(stats)
   } catch (error) {
     console.error('Error cloud stats:', error)
     res.status(500).json({ message: 'Error al obtener estadísticas de cloud' })
+  }
+})
+
+// Endpoint para invalidar cache (usado cuando hay cambios en datos)
+router.post('/refresh', async (req, res) => {
+  try {
+    invalidateCache('/api/dashboard')
+    res.json({ success: true, message: 'Cache de dashboards invalidado' })
+  } catch (error) {
+    console.error('Error invalidating cache:', error)
+    res.status(500).json({ message: 'Error al invalidar cache' })
   }
 })
 
