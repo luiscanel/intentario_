@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ============================================
-# Script de Despliegue - Inventario Almo
-# Servidor Dedicado (Sin Docker)
+# Script de Deploy - Inventario Almo
+# Uso: sudo ./deploy.sh
 # ============================================
 
 set -e
@@ -16,262 +16,136 @@ NC='\033[0m'
 
 # Variables
 APP_DIR="/opt/inventario-almo"
-LOG_FILE="/var/log/inventario-almo/install.log"
-SERVER_IP=$(hostname -I | awk '{print $1}')
+SERVER_IP="192.168.0.12"
 
-# ============================================
-# Funciones de logging
-# ============================================
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1" >> $LOG_FILE 2>/dev/null || true
-}
+# Puertos (importante: deben coincidir)
+BACKEND_PORT=3001
+FRONTEND_PORT=5174
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] $1" >> $LOG_FILE 2>/dev/null || true
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $1" >> $LOG_FILE 2>/dev/null || true
-}
-
-log_step() {
-    echo -e "${BLUE}[STEP]${NC} $1"
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [STEP] $1" >> $LOG_FILE 2>/dev/null || true
-}
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}  DEPLOY - Inventario Almo${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
 
 # Verificar root
 if [ "$EUID" -ne 0 ]; then
-    log_error "Este script debe ejecutarse como root"
-    echo "Uso: sudo $0"
+    echo -e "${RED}Error: ejecutar con sudo${NC}"
     exit 1
 fi
 
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  INSTALADOR - Inventario Almo${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo ""
-
-# ============================================
-# Paso 1: Actualizar sistema
-# ============================================
-log_step "Actualizando sistema..."
-export DEBIAN_FRONTEND=noninteractive
-apt update && apt upgrade -y
-
-# Instalar dependencias
-apt install -y curl wget git unzip sudo gnupg ca-certificates lsb-release build-essential nginx ufw fail2ban certbot python3-certbot-nginx sshpass
-
-# ============================================
-# Paso 2: Instalar Node.js 20.x
-# ============================================
-log_step "Instalando Node.js 20.x..."
-if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
-else
-    log_warn "Node.js ya está instalado: $(node --version)"
-fi
-
-# ============================================
-# Paso 3: Instalar PM2
-# ============================================
-log_step "Instalando PM2..."
-npm install -g pm2
-npm config set registry https://registry.npmmirror.com
-
-# ============================================
-# Paso 4: Crear directorios
-# ============================================
-log_step "Creando directorios..."
-mkdir -p $APP_DIR
-mkdir -p /var/log/inventario-almo
-mkdir -p $APP_DIR/backups
-mkdir -p /var/log/inventario
-
-# ============================================
-# Paso 5: Clonar proyecto
-# ============================================
-log_step "Clonando proyecto desde GitHub..."
-
-GITHUB_TOKEN="${GITHUB_TOKEN:-}"
-REPO_URL="https://github.com/luiscanel/intentario_.git"
-
-if [ -n "$GITHUB_TOKEN" ]; then
-    REPO_URL="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
-fi
+# -----------------------------------------------------------------------------
+# 1. Actualizar código
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[1/7] Actualizando código...${NC}"
 
 if [ -d "$APP_DIR/.git" ]; then
-    log_info "Repositorio ya existe, actualizando..."
-    cd $APP_DIR
+    cd "$APP_DIR"
     git pull origin master
 else
-    rm -rf $APP_DIR
-    git clone "$REPO_URL" $APP_DIR
-    cd $APP_DIR
-fi
-
-# Permisos
-chown -R $(whoami):$(whoami) $APP_DIR
-chmod -R 755 $APP_DIR
-
-# ============================================
-# Paso 6: Instalar dependencias
-# ============================================
-log_step "Instalando dependencias..."
-
-cd $APP_DIR
-npm install
-
-# ============================================
-# Paso 7: Configurar variables de entorno
-# ============================================
-log_step "Configurando variables de entorno..."
-
-JWT_SECRET=$(openssl rand -base64 32)
-
-# Configurar CORS con la IP del servidor
-CORS_ORIGIN="http://$SERVER_IP"
-
-cat > $APP_DIR/server/.env << EOF
-NODE_ENV=production
-PORT=3001
-HOST=0.0.0.0
-JWT_SECRET=$JWT_SECRET
-JWT_EXPIRES_IN=24h
-DATABASE_URL=file:./prisma/dev.db
-CORS_ORIGIN=$CORS_ORIGIN
-RATE_LIMIT_WINDOW_MS=15 minutes
-RATE_LIMIT_MAX_REQUESTS=100
-AUTH_RATE_LIMIT_MAX=5
-BACKUP_DIR=/opt/inventario-almo/backups
-EOF
-
-cat > $APP_DIR/client/.env << EOF
-VITE_API_URL=http://localhost:3001
-EOF
-
-log_info "CORS configurado: $CORS_ORIGIN"
-
-# ============================================
-# Paso 8: Generar Prisma y Base de Datos
-# ============================================
-log_step "Generando Prisma Client..."
-cd $APP_DIR/server
-npx prisma generate
-
-log_step "Creando base de datos..."
-npx prisma db push
-
-# Verificar base de datos
-if [ ! -f "$APP_DIR/server/prisma/dev.db" ]; then
-    log_error "No se encontró la base de datos"
+    echo -e "${RED}Error: No hay repositorio en $APP_DIR${NC}"
+    echo "Ejecutar install_dedicated.sh primero"
     exit 1
 fi
 
-log_info "Base de datos lista: $APP_DIR/server/prisma/dev.db"
+# -----------------------------------------------------------------------------
+# 2. Instalar dependencias
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[2/7] Instalando dependencias...${NC}"
 
-# ============================================
-# Paso 9: Crear usuario admin
-# ============================================
-log_step "Creando usuario administrador..."
+cd "$APP_DIR"
+npm install --silent 2>/dev/null || npm install
 
-cd $APP_DIR/server
-node -e "
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
+# -----------------------------------------------------------------------------
+# 3. Compilar frontend
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[3/7] Compilando frontend...${NC}"
 
-async function main() {
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  
-  await prisma.user.upsert({
-    where: { email: 'jorge.canel@grupoalmo.com' },
-    update: {},
-    create: {
-      email: 'jorge.canel@grupoalmo.com',
-      password: hashedPassword,
-      nombre: 'Jorge Canel',
-      rol: 'admin',
-      activo: true
-    }
-  });
-  
-  console.log('Usuario admin listo');
-}
-
-main().finally(() => prisma.\$disconnect());
-"
-
-# ============================================
-# Paso 10: Build Frontend
-# ============================================
-log_step "Build frontend..."
-cd $APP_DIR/client
+cd "$APP_DIR/client"
 npm run build
 
-# ============================================
-# Paso 11: Configurar Nginx con HTTPS
-# ============================================
-log_step "Configurando Nginx..."
+# Verificar que dist existe
+if [ ! -d "dist" ]; then
+    echo -e "${RED}Error: No se generó la carpeta dist${NC}"
+    exit 1
+fi
 
-# Copiar configuración
-cp $APP_DIR/nginx.conf /etc/nginx/sites-available/inventario-almo
-ln -sf /etc/nginx/sites-available/inventario-almo /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+echo -e "${GREEN}Frontend compilado OK${NC}"
 
-nginx -t
-systemctl restart nginx
-systemctl enable nginx
+# -----------------------------------------------------------------------------
+# 4. Regenerar Prisma
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[4/7] Regenerando Prisma...${NC}"
 
-# ============================================
-# Paso 12: Configurar PM2
-# ============================================
-log_step "Configurando PM2..."
+cd "$APP_DIR/server"
+npx prisma generate
 
-cd $APP_DIR
-pm2 delete inventario-backend inventario-frontend 2>/dev/null || true
+# -----------------------------------------------------------------------------
+# 5. Reiniciar servicios PM2
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[5/7] Reiniciando servicios...${NC}"
+
+# Verificar que ecosystem.config.js tiene los puertos correctos
+# Si los paths son relativos, convertirlos a absolutos
+if ! grep -q "$APP_DIR" "$APP_DIR/ecosystem.config.js"; then
+    echo "Actualizando paths en ecosystem.config.js..."
+    sed -i "s|cwd: './server'|cwd: '$APP_DIR/server'|g" "$APP_DIR/ecosystem.config.js"
+    sed -i "s|cwd: './client'|cwd: '$APP_DIR/client'|g" "$APP_DIR/ecosystem.config.js"
+fi
+
+# Reiniciar PM2
+cd "$APP_DIR"
+pm2 delete all 2>/dev/null || true
 pm2 start ecosystem.config.js
 pm2 save
 
-# Auto-inicio
-pm2 startup
+echo -e "${GREEN}PM2 iniciado OK${NC}"
 
-# Permisos
-chown -R $(whoami):$(whoami) $APP_DIR
+# -----------------------------------------------------------------------------
+# 6. Verificar servicios
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[6/7] Verificando servicios...${NC}"
 
-# ============================================
-# Paso 13: Configurar Firewall
-# ============================================
-log_step "Configurando firewall..."
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
+sleep 3
 
-# ============================================
+# Verificar que los servicios están corriendo
+BACKEND_STATUS=$(pm2 jlist | grep -o '"status":"[^"]*"' | grep 'inventario-backend' | head -1)
+FRONTEND_STATUS=$(pm2 jlist | grep -o '"status":"[^"]*"' | grep 'inventario-frontend' | head -1)
+
+if echo "$BACKEND_STATUS" | grep -q "online"; then
+    echo -e "${GREEN}✓ Backend online${NC}"
+else
+    echo -e "${RED}✗ Backend offline${NC}"
+    pm2 logs inventario-backend --lines 10
+fi
+
+if echo "$FRONTEND_STATUS" | grep -q "online"; then
+    echo -e "${GREEN}✓ Frontend online${NC}"
+else
+    echo -e "${RED}✗ Frontend offline${NC}"
+    pm2 logs inventario-frontend --lines 10
+fi
+
+# -----------------------------------------------------------------------------
+# 7. Verificar Nginx
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[7/7] Verificando Nginx...${NC}"
+
+nginx -t && systemctl reload nginx
+echo -e "${GREEN}Nginx OK${NC}"
+
+# -----------------------------------------------------------------------------
 # Resumen
-# ============================================
+# -----------------------------------------------------------------------------
 echo ""
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  INSTALACIÓN COMPLETADA${NC}"
+echo -e "${GREEN}  DEPLOY COMPLETADO${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "Frontend: ${BLUE}http://$SERVER_IP${NC}"
-echo -e "Backend:  ${BLUE}http://$SERVER_IP:3001${NC}"
-echo -e "API:      ${BLUE}http://$SERVER_IP/api/${NC}"
+echo -e "Acceso: ${BLUE}http://$SERVER_IP${NC}"
+echo -e "Usuario: jorge.canel@grupoalmo.com"
+echo -e "Password: admin123"
 echo ""
-echo -e "Credenciales:"
-echo -e "  Usuario: jorge.canel@grupoalmo.com"
-echo -e "  Contraseña: admin123"
-echo ""
-echo -e "Comandos:"
-echo -e "  pm2 status"
-echo -e "  pm2 logs"
-echo -e "  pm2 restart all"
-echo ""
-echo -e "${YELLOW}Para SSL/HTTPS con dominio real:${NC}"
-echo -e "  sudo certbot --nginx -d tudominio.com --agree-tos -m tu@email.com"
+echo -e "${YELLOW}Comandos:${NC}"
+echo "  pm2 status"
+echo "  pm2 logs"
 echo ""

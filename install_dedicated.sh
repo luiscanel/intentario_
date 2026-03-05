@@ -5,10 +5,8 @@
 # =============================================================================
 # Instalación completa con:
 # - Node.js 20.x + PM2
-# - Nginx con SSL (Let's Encrypt)
-# - Redirect HTTP → HTTPS
-# - CORS configurado
-# - Frontend en producción
+# - Nginx configurado correctamente
+# - Frontend y Backend funcionando
 # =============================================================================
 
 set -e
@@ -29,16 +27,12 @@ ROOT_PASSWORD="123456789"
 GIT_REPO="https://github.com/luiscanel/Inventario-Almo.git"
 APP_DIR="/opt/inventario-almo"
 
-# IP o dominio del servidor
+# IP del servidor
 SERVER_IP="192.168.0.12"
-DOMAIN=""  # Dejar vacío si no tienes dominio, usar IP
 
-# Puertos
+# Puertos (NO CAMBIAR - coincidencias críticas)
 BACKEND_PORT=3001
-FRONTEND_PORT=5173  # Cambiado para producción build
-
-# Correo para Let's Encrypt
-EMAIL="admin@grupoalmo.com"
+FRONTEND_PORT=5174  # IMPORTANTE: debe coincidir con ecosystem.config.js y Nginx
 
 # ============================================
 
@@ -56,14 +50,14 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}[1/15] Verificando sistema...${NC}"
+echo -e "${YELLOW}[1/14] Verificando sistema...${NC}"
 . /etc/os-release
 echo -e "${GREEN}Sistema: $PRETTY_NAME${NC}"
 
 # -----------------------------------------------------------------------------
 # Actualizar e instalar dependencias
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[2/15] Instalando dependencias del sistema...${NC}"
+echo -e "${YELLOW}[2/14] Instalando dependencias del sistema...${NC}"
 
 export DEBIAN_FRONTEND=noninteractive
 apt update && apt upgrade -y
@@ -88,7 +82,7 @@ apt install -y \
 # -----------------------------------------------------------------------------
 # Instalar Node.js
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[3/15] Instalando Node.js 20.x...${NC}"
+echo -e "${YELLOW}[3/14] Instalando Node.js 20.x...${NC}"
 
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt install -y nodejs
@@ -98,7 +92,7 @@ echo -e "${GREEN}Node.js: $(node -v)${NC}"
 # -----------------------------------------------------------------------------
 # Crear usuario
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[4/15] Creando usuario '$APP_USER'...${NC}"
+echo -e "${YELLOW}[4/14] Creando usuario '$APP_USER'...${NC}"
 
 if ! id "$APP_USER" &>/dev/null; then
     useradd -m -s /bin/bash -G sudo "$APP_USER"
@@ -109,13 +103,13 @@ fi
 # -----------------------------------------------------------------------------
 # Contraseña root
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[5/15] Configurando contraseña de root...${NC}"
+echo -e "${YELLOW}[5/14] Configurando contraseña de root...${NC}"
 echo "root:$ROOT_PASSWORD" | chpasswd
 
 # -----------------------------------------------------------------------------
 # Clonar proyecto
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[6/15] Clonando proyecto...${NC}"
+echo -e "${YELLOW}[6/14] Clonando proyecto...${NC}"
 
 if [ -d "$APP_DIR" ]; then
     cd "$APP_DIR"
@@ -130,7 +124,7 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 # -----------------------------------------------------------------------------
 # Instalar dependencias
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[7/15] Instalando dependencias npm...${NC}"
+echo -e "${YELLOW}[7/14] Instalando dependencias npm...${NC}"
 
 cd "$APP_DIR"
 npm install
@@ -138,14 +132,7 @@ npm install
 # -----------------------------------------------------------------------------
 # Configurar variables de entorno
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[8/15] Configurando .env...${NC}"
-
-# Determinar CORS_ORIGIN
-if [ -n "$DOMAIN" ]; then
-    CORS_ORIGIN="https://$DOMAIN"
-else
-    CORS_ORIGIN="http://$SERVER_IP"
-fi
+echo -e "${YELLOW}[8/14] Configurando .env...${NC}"
 
 cat > "$APP_DIR/server/.env" << EOF
 NODE_ENV=production
@@ -154,61 +141,34 @@ HOST=0.0.0.0
 JWT_SECRET=inventario-almo-prod-$(date +%s)-$(openssl rand -hex 16)
 JWT_EXPIRES_IN=24h
 DATABASE_URL=file:./prisma/dev.db
-CORS_ORIGIN=$CORS_ORIGIN
+CORS_ORIGIN=http://$SERVER_IP
 EOF
 
 chown "$APP_USER:$APP_USER" "$APP_DIR/server/.env"
-echo -e "${GREEN}CORS configurado: $CORS_ORIGIN${NC}"
+echo -e "${GREEN}CORS configurado: http://$SERVER_IP${NC}"
 
 # -----------------------------------------------------------------------------
 # Prisma y base de datos
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[9/15] Generando base de datos...${NC}"
+echo -e "${YELLOW}[9/14] Generando base de datos...${NC}"
 
 cd "$APP_DIR/server"
 npx prisma generate
 npx prisma db push
 
 # -----------------------------------------------------------------------------
-# Compilar TypeScript
+# Compilar frontend (importante para producción)
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[10/15] Compilando backend...${NC}"
-
-npm run build
-echo -e "${GREEN}Backend compilado${NC}"
-
-# -----------------------------------------------------------------------------
-# Compilar frontend
-# -----------------------------------------------------------------------------
-echo -e "${YELLOW}[11/15] Compilando frontend...${NC}"
+echo -e "${YELLOW}[10/14] Compilando frontend...${NC}"
 
 cd "$APP_DIR/client"
-
-# Configurar Vite para producción
-cat > vite.config.ts << 'EOF'
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: '0.0.0.0',
-    port: 5173
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: false
-  }
-})
-EOF
-
 npm run build
 echo -e "${GREEN}Frontend compilado${NC}"
 
 # -----------------------------------------------------------------------------
 # PM2
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[12/15] Configurando PM2...${NC}"
+echo -e "${YELLOW}[11/14] Configurando PM2...${NC}"
 
 npm install -g pm2
 
@@ -216,23 +176,25 @@ npm install -g pm2
 mkdir -p /var/log/inventario
 chown -R "$APP_USER:$APP_USER" /var/log/inventario
 
-# Configuración PM2 para producción
+# Configuración PM2 - CORREGIDA
+# IMPORTANTE: usa paths absolutos y npx con vite
 cat > "$APP_DIR/ecosystem.config.js" << EOF
 module.exports = {
   apps: [
     {
       name: 'inventario-backend',
-      script: 'dist/index.js',
-      cwd: './server',
+      script: 'npx',
+      args: 'tsx src/index.ts',
+      cwd: '$APP_DIR/server',
       interpreter: 'none',
-      instances: 2,
-      exec_mode: 'cluster',
+      instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'production',
-        PORT: $BACKEND_PORT
+        PORT: $BACKEND_PORT,
+        HOST: '0.0.0.0'
       },
       error_file: '/var/log/inventario/backend-error.log',
       out_file: '/var/log/inventario/backend-out.log',
@@ -241,18 +203,16 @@ module.exports = {
     },
     {
       name: 'inventario-frontend',
-      script: 'npm',
-      args: 'run preview',
-      cwd: './client',
+      script: 'npx',
+      args: 'vite preview --host 0.0.0.0 --port $FRONTEND_PORT',
+      cwd: '$APP_DIR/client',
       interpreter: 'none',
-      instances: 2,
-      exec_mode: 'cluster',
+      instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '300M',
       env: {
-        NODE_ENV: 'production',
-        PORT: $FRONTEND_PORT
+        NODE_ENV: 'production'
       },
       error_file: '/var/log/inventario/frontend-error.log',
       out_file: '/var/log/inventario/frontend-out.log',
@@ -263,53 +223,21 @@ module.exports = {
 };
 EOF
 
-# -----------------------------------------------------------------------------
-# Nginx con HTTP y HTTPS
-# -----------------------------------------------------------------------------
-echo -e "${YELLOW}[13/15] Configurando Nginx...${NC}"
+chown "$APP_USER:$APP_USER" "$APP_DIR/ecosystem.config.js"
 
-# Determinar server_name
-if [ -n "$DOMAIN" ]; then
-    SERVER_NAME="$DOMAIN $SERVER_IP"
-else
-    SERVER_NAME="$SERVER_IP"
-fi
+# -----------------------------------------------------------------------------
+# Nginx - CORREGIDO para coincidir con puertos
+# -----------------------------------------------------------------------------
+echo -e "${YELLOW}[12/14] Configurando Nginx...${NC}"
 
-# Configuración Nginx con HTTP, HTTPS y redirect
+# Configuración Nginx SIMPLE (sin HTTPS redirect para evitar problemas)
 cat > /etc/nginx/sites-available/inventario-almo << EOF
-# HTTP - Redirect to HTTPS
 server {
     listen 80;
-    server_name $SERVER_NAME;
+    server_name $SERVER_IP;
 
-    # Redirect HTTP → HTTPS
-    return 301 https://\$host\$request_uri;
-}
-
-# HTTPS
-server {
-    listen 443 ssl http2;
-    server_name $SERVER_NAME;
-
-    # SSL (se configurará con Let's Encrypt o certificados propios)
-    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
-    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-
-    # Frontend (Producción - carpeta dist)
+    # Frontend (Vite preview server)
     location / {
-        root $APP_DIR/client/dist;
-        index index.html;
-        try_files \$uri \$uri/ /index.html;
-        
-        # Cache para estáticos
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
-        
         proxy_pass http://127.0.0.1:$FRONTEND_PORT;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -319,6 +247,10 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
+        
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
     # Backend API
@@ -348,11 +280,12 @@ rm -f /etc/nginx/sites-enabled/default
 
 nginx -t
 systemctl restart nginx
+echo -e "${GREEN}Nginx configurado${NC}"
 
 # -----------------------------------------------------------------------------
 # Usuario admin
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[14/15] Creando usuario admin...${NC}"
+echo -e "${YELLOW}[13/14] Creando usuario admin...${NC}"
 
 cd "$APP_DIR/server"
 node -e "
@@ -360,7 +293,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
-async function main() {
+async main() {
   const hashedPassword = await bcrypt.hash('admin123', 10);
   
   await prisma.user.upsert({
@@ -375,7 +308,7 @@ async function main() {
     }
   });
   
-  console.log('Usuario admin listo');
+  console.log('Usuario admin creado');
 }
 
 main().finally(() => prisma.\$disconnect());
@@ -384,22 +317,24 @@ main().finally(() => prisma.\$disconnect());
 # -----------------------------------------------------------------------------
 # Iniciar PM2
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[15/15] Iniciando servicios...${NC}"
+echo -e "${YELLOW}[14/14] Iniciando servicios...${NC}"
 
 cd "$APP_DIR"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
-su - "$APP_USER" -c "cd $APP_DIR && pm2 start ecosystem.config.js"
-pm2 save
-pm2 startup
+# Detener cualquier proceso anterior
+su - "$APP_USER" -c "pm2 delete all 2>/dev/null || true"
+
+# Iniciar servicios
+su - "$APP_USER" -c "pm2 start $APP_DIR/ecosystem.config.js"
+su - "$APP_USER" -c "pm2 save"
 
 # -----------------------------------------------------------------------------
-# Firewall
+# Firewall (opcional)
 # -----------------------------------------------------------------------------
 ufw allow 22/tcp
 ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
+ufw --force enable 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # Resumen
@@ -410,12 +345,7 @@ echo -e "${GREEN}  INSTALACIÓN COMPLETADA${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "${BLUE}Acceso:${NC}"
-if [ -n "$DOMAIN" ]; then
-    echo -e "  - HTTP:  http://$DOMAIN"
-    echo -e "  - HTTPS: https://$DOMAIN"
-else
-    echo -e "  - HTTP:  http://$SERVER_IP"
-fi
+echo -e "  - URL: http://$SERVER_IP"
 echo -e "  - Usuario: jorge.canel@grupoalmo.com"
 echo -e "  - Contraseña: admin123"
 echo ""
@@ -423,11 +353,7 @@ echo -e "${BLUE}Credenciales servidor:${NC}"
 echo -e "  - Usuario: $APP_USER / $APP_PASSWORD"
 echo -e "  - Root:   $ROOT_PASSWORD"
 echo ""
-echo -e "${BLUE}SSL:${NC}"
-echo -e "  Para configurar Let's Encrypt (dominio requerido):"
-echo -e "  sudo certbot --nginx -d $DOMAIN --agree-tos -m $EMAIL"
-echo ""
-echo -e "${BLUE}Comandos:${NC}"
+echo -e "${BLUE}Comandos útiles:${NC}"
 echo -e "  pm2 status"
 echo -e "  pm2 logs"
 echo -e "  pm2 restart all"

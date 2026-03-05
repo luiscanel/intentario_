@@ -2,6 +2,14 @@
 // PM2 Ecosystem Configuration
 // Inventario Almo - Servidor Dedicado
 // ============================================
+//
+// IMPORTANTE: Este archivo se usa tanto para desarrollo local como para producción.
+// En producción, los paths se convierten a absolutos automáticamente.
+//
+// Puertos:
+// - Backend: 3001
+// - Frontend: 5174 (debe coincidir con Nginx)
+// ============================================
 
 module.exports = {
   apps: [
@@ -44,4 +52,4 @@ module.exports = {
       merge_logs: true
     }
   ]
-}
+};
