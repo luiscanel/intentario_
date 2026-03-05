@@ -2,35 +2,79 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import { Search, LayoutDashboard, Server, HardDrive, FileText, Users, LogOut, Menu, Shield, Cpu, Activity, User, Cloud, ChevronRight, Key, Building2, FileKey, FileCheck, Bell, History } from 'lucide-react'
+import { Search, LayoutDashboard, Server, HardDrive, FileText, Users, LogOut, Menu, Shield, Cpu, Activity, User, Cloud, Key, Building2, FileKey, FileCheck, Bell, History, Clock, ShieldCheck, Wrench } from 'lucide-react'
 import { changePassword } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 
-const modulos = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', permiso: null },
-  { to: '/inventory', icon: Server, label: 'Inv. Onpremise', permiso: { modulo: 'inventario_servidores', accion: 'ver' } },
-  { to: '/inventario-cloud', icon: Cloud, label: 'Inv. Cloud', permiso: { modulo: 'inventario_cloud', accion: 'ver' } },
-  { to: '/inventario-fisico', icon: HardDrive, label: 'Inventario Físico', permiso: { modulo: 'inventario_fisico', accion: 'ver' } },
-  { to: '/monitor', icon: Activity, label: 'Monitor', permiso: null },
-  { to: '/proveedores', icon: Building2, label: 'Proveedores', permiso: null },
-  { to: '/licencias', icon: FileKey, label: 'Licencias', permiso: null },
-  { to: '/contratos', icon: FileCheck, label: 'Contratos', permiso: null },
-  { to: '/alertas', icon: Bell, label: 'Alertas', permiso: null },
-  { to: '/seguridad', icon: Shield, label: 'Seguridad', permiso: null },
-  { to: '/recursos', icon: Cpu, label: 'Recursos', permiso: null },
-  { to: '/disponibilidad', icon: Activity, label: 'Disponibilidad', permiso: null },
-  { to: '/inventario-fisico-detalle', icon: HardDrive, label: 'Inv. Físico Detalle', permiso: { modulo: 'inventario_fisico', accion: 'ver' } },
-  { to: '/responsables', icon: User, label: 'Responsables', permiso: null },
-  { to: '/reports', icon: FileText, label: 'Informes', permiso: { modulo: 'informes', accion: 'ver' } },
-  { to: '/admin', icon: Users, label: 'Admin', permiso: { modulo: 'admin', accion: 'ver' } },
-  { to: '/audit-log', icon: History, label: 'Audit Log', permiso: { modulo: 'admin', accion: 'ver' } },
+// Secciones del menú
+const secciones = [
+  {
+    titulo: 'General',
+    items: [
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard', permiso: null },
+    ]
+  },
+  {
+    titulo: 'Inventario',
+    items: [
+      { to: '/inventory', icon: Server, label: 'On-Premise', permiso: { modulo: 'inventario_servidores', accion: 'ver' } },
+      { to: '/inventario-cloud', icon: Cloud, label: 'Cloud', permiso: { modulo: 'inventario_cloud', accion: 'ver' } },
+      { to: '/inventario-fisico', icon: HardDrive, label: 'Físico', permiso: { modulo: 'inventario_fisico', accion: 'ver' } },
+    ]
+  },
+  {
+    titulo: 'Monitoreo',
+    items: [
+      { to: '/monitor', icon: Activity, label: 'Disponibilidad', permiso: null },
+      // Servicios ahora está integrado en Monitoreo
+    ]
+  },
+  {
+    titulo: 'Administración',
+    items: [
+      { to: '/proveedores', icon: Building2, label: 'Proveedores', permiso: null },
+      { to: '/licencias', icon: FileKey, label: 'Licencias', permiso: null },
+      { to: '/contratos', icon: FileCheck, label: 'Contratos', permiso: null },
+    ]
+  },
+  {
+    titulo: 'Seguridad',
+    items: [
+      { to: '/seguridad', icon: Shield, label: 'General', permiso: null },
+      { to: '/certificados', icon: ShieldCheck, label: 'Certificados SSL', permiso: null },
+    ]
+  },
+  {
+    titulo: 'Operaciones',
+    items: [
+      { to: '/cambios', icon: Wrench, label: 'Gestión de Cambios', permiso: null },
+      { to: '/backups', icon: Clock, label: 'Backups', permiso: null },
+    ]
+  },
+  {
+    titulo: 'Finanzas',
+    items: [
+      // Los costos ahora se ven en Inventario Cloud
+    ]
+  },
+  {
+    titulo: 'Sistema',
+    items: [
+      { to: '/alertas', icon: Bell, label: 'Alertas', permiso: null },
+      { to: '/recursos', icon: Cpu, label: 'Recursos', permiso: null },
+      { to: '/responsables', icon: User, label: 'Responsables', permiso: null },
+      { to: '/reports', icon: FileText, label: 'Informes', permiso: { modulo: 'informes', accion: 'ver' } },
+      { to: '/admin', icon: Users, label: 'Admin', permiso: { modulo: 'admin', accion: 'ver' } },
+      { to: '/audit-log', icon: History, label: 'Audit Log', permiso: { modulo: 'admin', accion: 'ver' } },
+    ]
+  }
 ]
 
 export default function Layout() {
-  const { user, logout, permisos, tienePermiso } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,10 +84,6 @@ export default function Layout() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
   const { toast } = useToast()
-
-  const navItems = permisos.length > 0 
-    ? modulos.filter(m => !m.permiso || tienePermiso(m.permiso.modulo, m.permiso.accion))
-    : modulos
 
   const handleLogout = () => {
     logout()
@@ -113,29 +153,33 @@ export default function Layout() {
         </div>
         
         {/* Navigation */}
-        <nav className="p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25' 
-                    : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
-                }`
-              }
-              end={item.to === '/'}
-            >
-              <div className={`p-2 rounded-lg ${true ? 'bg-slate-800/50' : ''} group-hover:bg-slate-700/50 transition-colors`}>
-                <item.icon className="w-5 h-5" />
+        <nav className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-140px)]">
+          {secciones.map((seccion) => (
+            <div key={seccion.titulo}>
+              <h3 className="px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {seccion.titulo}
+              </h3>
+              <div className="space-y-1">
+                {seccion.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setSidebarOpen(false)}
+                    className={({ isActive }) =>
+                      `group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
+                        isActive 
+                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25' 
+                          : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
+                      }`
+                    }
+                    end={item.to === '/'}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </NavLink>
+                ))}
               </div>
-              <span className="font-medium">{item.label}</span>
-              {true && (
-                <ChevronRight className="w-4 h-4 ml-auto opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-              )}
-            </NavLink>
+            </div>
           ))}
         </nav>
       </aside>

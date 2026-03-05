@@ -752,3 +752,321 @@ export async function deleteDocumento(id: number) {
     headers: getHeaders()
   }))
 }
+
+// ============================================
+// CERTIFICADOS SSL
+// ============================================
+export async function getCertificados(vencidos?: boolean, porVencer?: boolean) {
+  let url = `${API_URL}/certificados`
+  const params = new URLSearchParams()
+  if (vencidos) params.append('vencidos', 'true')
+  if (porVencer) params.append('porVencer', 'true')
+  if (params.toString()) url += `?${params.toString()}`
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(url, { headers: getHeaders() }))
+}
+
+export async function getCertificado(id: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/certificados/${id}`, { headers: getHeaders() }))
+}
+
+export async function getCertificadosEstadisticas() {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/certificados/estadisticas`, { headers: getHeaders() }))
+}
+
+export async function createCertificado(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/certificados`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateCertificado(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/certificados/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteCertificado(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/certificados/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// CAMBIOS (Gestión de cambios)
+// ============================================
+export async function getCambios(filtros?: { estado?: string; tipo?: string; prioridad?: string; buscar?: string }) {
+  let url = `${API_URL}/cambios`
+  const params = new URLSearchParams()
+  if (filtros?.estado) params.append('estado', filtros.estado)
+  if (filtros?.tipo) params.append('tipo', filtros.tipo)
+  if (filtros?.prioridad) params.append('prioridad', filtros.prioridad)
+  if (filtros?.buscar) params.append('buscar', filtros.buscar)
+  if (params.toString()) url += `?${params.toString()}`
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(url, { headers: getHeaders() }))
+}
+
+export async function getCambio(id: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}`, { headers: getHeaders() }))
+}
+
+export async function getCambiosEstadisticas() {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/estadisticas`, { headers: getHeaders() }))
+}
+
+export async function createCambio(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateCambio(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function aprobarCambio(id: number, comentarios?: string) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}/aprobar`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ comentarios })
+  }))
+}
+
+export async function rechazarCambio(id: number, comentarios?: string) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}/rechazar`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ comentarios })
+  }))
+}
+
+export async function iniciarCambio(id: number, responsable?: string) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}/iniciar`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ responsable })
+  }))
+}
+
+export async function completarCambio(id: number, downtimeReal?: string, notas?: string) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}/completar`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ downtimeReal, notas })
+  }))
+}
+
+export async function cancelarCambio(id: number, motivo: string) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/cambios/${id}/cancelar`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ motivo })
+  }))
+}
+
+export async function deleteCambio(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/cambios/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// BACKUPS PROGRAMADOS
+// ============================================
+export async function getBackupsProgramados() {
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(`${API_URL}/backups-programados`, { headers: getHeaders() }))
+}
+
+export async function getBackupProgramado(id: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/backups-programados/${id}`, { headers: getHeaders() }))
+}
+
+export async function getBackupsEstadisticas() {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/backups-programados/estadisticas`, { headers: getHeaders() }))
+}
+
+export async function createBackupProgramado(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/backups-programados`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateBackupProgramado(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/backups-programados/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteBackupProgramado(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/backups-programados/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+export async function ejecutarBackup(id: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/backups-programados/${id}/ejecutar`, {
+    method: 'POST',
+    headers: getHeaders()
+  }))
+}
+
+export async function getHistorialBackup(id: number) {
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(`${API_URL}/backups-programados/${id}/historial`, { headers: getHeaders() }))
+}
+
+// ============================================
+// COSTOS CLOUD
+// ============================================
+export async function getCostos(filtros?: { proveedor?: string; cuenta?: string; servicio?: string; mes?: string }) {
+  let url = `${API_URL}/costos`
+  const params = new URLSearchParams()
+  if (filtros?.proveedor) params.append('proveedor', filtros.proveedor)
+  if (filtros?.cuenta) params.append('cuenta', filtros.cuenta)
+  if (filtros?.servicio) params.append('servicio', filtros.servicio)
+  if (filtros?.mes) params.append('mes', filtros.mes)
+  if (params.toString()) url += `?${params.toString()}`
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(url, { headers: getHeaders() }))
+}
+
+export async function getCostosResumen(anio?: string) {
+  let url = `${API_URL}/costos/resumen`
+  if (anio) url += `?anio=${anio}`
+  return handleResponse<{ success: boolean; data: any }>(await fetch(url, { headers: getHeaders() }))
+}
+
+export async function getCostosMes(mes: string) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/costos/mes/${mes}`, { headers: getHeaders() }))
+}
+
+export async function createCosto(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/costos`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function importarCostos(costos: any[]) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/costos/importar`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ costos })
+  }))
+}
+
+export async function updateCosto(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/costos/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteCosto(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/costos/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// COSTOS CLOUD (Nuevas funciones)
+// ============================================
+export async function getCostosCloud() {
+  return handleResponse<any[]>(await fetch(`${API_URL}/costos`, { headers: getHeaders() }))
+}
+
+export async function getCostosEstadisticas() {
+  return handleResponse<any>(await fetch(`${API_URL}/costos/estadisticas`, { headers: getHeaders() }))
+}
+
+export async function createCostoCloud(data: any) {
+  return handleResponse<any>(await fetch(`${API_URL}/costos`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateCostoCloud(id: number, data: any) {
+  return handleResponse<any>(await fetch(`${API_URL}/costos/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteCostoCloud(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/costos/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+// ============================================
+// SERVICIOS (Monitoreo)
+// ============================================
+export async function getServicios() {
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(`${API_URL}/servicios`, { headers: getHeaders() }))
+}
+
+export async function getServicio(id: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/servicios/${id}`, { headers: getHeaders() }))
+}
+
+export async function getServiciosEstadisticas() {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/servicios/estadisticas`, { headers: getHeaders() }))
+}
+
+export async function createServicio(data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/servicios`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function updateServicio(id: number, data: any) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/servicios/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  }))
+}
+
+export async function deleteServicio(id: number) {
+  return handleResponse<{ success: boolean; message: string }>(await fetch(`${API_URL}/servicios/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  }))
+}
+
+export async function checkServicio(id: number, puerto?: number) {
+  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/servicios/${id}/check`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ puerto })
+  }))
+}
+
+export async function getHistorialServicio(id: number, horas?: number) {
+  let url = `${API_URL}/servicios/${id}/historial`
+  if (horas) url += `?horas=${horas}`
+  return handleResponse<{ success: boolean; data: any[] }>(await fetch(url, { headers: getHeaders() }))
+}

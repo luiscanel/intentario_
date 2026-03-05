@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLicencias, createLicencia, updateLicencia, deleteLicencia } from '../lib/api'
+import { getLicencias, createLicencia, updateLicencia, deleteLicencia, getServidores } from '../lib/api'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
@@ -17,11 +17,20 @@ interface Licencia {
   moneda: string
   fechaVencimiento?: string
   proveedor?: { id: number; nombre: string }
+  servidorId?: number
+  servidor?: { id: number; host: string }
   activa: boolean
+}
+
+interface Servidor {
+  id: number
+  host: string
+  ip: string | null
 }
 
 export default function Licencias() {
   const [licencias, setLicencias] = useState<Licencia[]>([])
+  const [servidores, setServidores] = useState<Servidor[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState<Licencia | null>(null)
@@ -37,12 +46,21 @@ export default function Licencias() {
     moneda: 'USD',
     fechaVencimiento: '',
     proveedorId: '',
+    servidorId: '',
     activa: true
   })
 
   useEffect(() => {
     cargarLicencias()
+    cargarServidores()
   }, [])
+
+  const cargarServidores = async () => {
+    try {
+      const data = await getServidores()
+      setServidores(data)
+    } catch (error) { console.error('Error:', error) }
+  }
 
   const cargarLicencias = async () => {
     try {
@@ -62,7 +80,8 @@ export default function Licencias() {
         ...form, 
         cantidad: Number(form.cantidad), 
         usada: Number(form.usada),
-        proveedorId: form.proveedorId ? parseInt(form.proveedorId as any) : null
+        proveedorId: form.proveedorId ? parseInt(form.proveedorId as any) : null,
+        servidorId: form.servidorId ? parseInt(form.servidorId as any) : null
       }
       if (data.costo) data.costo = parseFloat(data.costo)
       
@@ -93,7 +112,7 @@ export default function Licencias() {
   }
 
   const resetForm = () => {
-    setForm({ nombre: '', tipo: 'Otro', version: '', cantidad: '1', usada: '0', costo: '', moneda: 'USD', fechaVencimiento: '', proveedorId: '', activa: true })
+    setForm({ nombre: '', tipo: 'Otro', version: '', cantidad: '1', usada: '0', costo: '', moneda: 'USD', fechaVencimiento: '', proveedorId: '', servidorId: '', activa: true })
     setEditando(null)
   }
 
@@ -109,6 +128,7 @@ export default function Licencias() {
       moneda: l.moneda,
       fechaVencimiento: l.fechaVencimiento ? l.fechaVencimiento.split('T')[0] : '',
       proveedorId: l.proveedor?.id?.toString() || '',
+      servidorId: l.servidorId?.toString() || '',
       activa: l.activa
     })
     setShowModal(true)
@@ -210,6 +230,12 @@ export default function Licencias() {
               </select>
             </div>
             <Input placeholder="Fecha de vencimiento" type="date" value={form.fechaVencimiento} onChange={e => setForm({...form, fechaVencimiento: e.target.value})} />
+            <select className="w-full p-2 border rounded" value={form.servidorId} onChange={e => setForm({...form, servidorId: e.target.value})}>
+              <option value="">Seleccionar servidor (opcional)</option>
+              {servidores.map(s => (
+                <option key={s.id} value={s.id}>{s.host} ({s.ip})</option>
+              ))}
+            </select>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>

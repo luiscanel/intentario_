@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getDashboardSecurity } from '@/lib/api'
+import { getDashboardSecurity, getCertificadosEstadisticas } from '@/lib/api'
 import {
   Shield,
   ShieldOff,
@@ -9,7 +9,8 @@ import {
   Cpu,
   Globe,
   Monitor,
-  CheckCircle
+  CheckCircle,
+  Key
 } from 'lucide-react'
 import { StatCard, DonutChartCard, BarChartCard } from '@/components/charts/ModernCharts'
 
@@ -37,6 +38,7 @@ interface SecurityStats {
 
 export default function DashboardSeguridad() {
   const [stats, setStats] = useState<SecurityStats | null>(null)
+  const [certStats, setCertStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showCritical, setShowCritical] = useState(false)
 
@@ -46,8 +48,12 @@ export default function DashboardSeguridad() {
 
   const loadStats = async () => {
     try {
-      const data = await getDashboardSecurity()
-      setStats(data)
+      const [securityData, certData] = await Promise.all([
+        getDashboardSecurity(),
+        getCertificadosEstadisticas()
+      ])
+      setStats(securityData)
+      setCertStats(certData?.data || certData)
     } catch (error) {
       console.error('Error loading security stats:', error)
     } finally {
@@ -245,6 +251,62 @@ export default function DashboardSeguridad() {
           </CardContent>
         </Card>
       )}
+
+      {/* Certificados SSL Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-orange-200">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                <Key className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Certificados</p>
+                <p className="text-2xl font-bold">{certStats?.total || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-red-200">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Vencidos</p>
+                <p className="text-2xl font-bold text-red-600">{certStats?.vencidos || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-yellow-200">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Por Vencer (30 días)</p>
+                <p className="text-2xl font-bold text-yellow-600">{certStats?.porVencer || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Válidos</p>
+                <p className="text-2xl font-bold text-green-600">{certStats?.activos || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

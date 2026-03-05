@@ -6,7 +6,6 @@ import Dashboard from './pages/Dashboard'
 import DashboardSeguridad from './pages/DashboardSeguridad'
 import DashboardRecursos from './pages/DashboardRecursos'
 import DashboardDisponibilidad from './pages/DashboardDisponibilidad'
-import DashboardInventarioFisico from './pages/DashboardInventarioFisico'
 import DashboardResponsables from './pages/DashboardResponsables'
 import Inventory from './pages/Inventory'
 import InventarioFisico from './pages/InventarioFisico'
@@ -19,6 +18,10 @@ import Contratos from './pages/Contratos'
 import Alertas from './pages/Alertas'
 import Monitor from './pages/Monitor'
 import AuditLog from './pages/AuditLog'
+// Nuevos módulos
+import Certificados from './pages/Certificados'
+import Cambios from './pages/Cambios'
+import Backups from './pages/Backups'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -43,7 +46,6 @@ function App() {
           <Route path="seguridad" element={<DashboardSeguridad />} />
           <Route path="recursos" element={<DashboardRecursos />} />
           <Route path="disponibilidad" element={<DashboardDisponibilidad />} />
-          <Route path="inventario-fisico-detalle" element={<DashboardInventarioFisico />} />
           <Route path="responsables" element={<DashboardResponsables />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="inventario-cloud" element={<InventoryCloud />} />
@@ -56,6 +58,9 @@ function App() {
           <Route path="alertas" element={<Alertas />} />
           <Route path="monitor" element={<Monitor />} />
           <Route path="audit-log" element={<AuditLog />} />
+          <Route path="certificados" element={<Certificados />} />
+          <Route path="cambios" element={<Cambios />} />
+          <Route path="backups" element={<Backups />} />
         </Route>
       </Routes>
       <Toaster />
