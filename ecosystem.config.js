@@ -9,7 +9,7 @@ module.exports = {
       name: 'inventario-backend',
       script: 'npx',
       args: 'tsx src/index.ts',
-      cwd: '/opt/inventario-almo/server',
+      cwd: './server',
       interpreter: 'none',
       instances: 1,
       autorestart: true,
@@ -27,17 +27,16 @@ module.exports = {
     },
     {
       name: 'inventario-frontend',
-      script: 'npm',
-      args: 'run preview -- --host 0.0.0.0 --port 5173',
-      cwd: '/opt/inventario-almo/client',
+      script: 'npx',
+      args: 'vite preview --host 0.0.0.0 --port 5174',
+      cwd: './client',
       interpreter: 'none',
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '300M',
       env: {
-        NODE_ENV: 'production',
-        VITE_API_URL: 'http://localhost:3001'
+        NODE_ENV: 'production'
       },
       error_file: '/var/log/inventario/frontend-error.log',
       out_file: '/var/log/inventario/frontend-out.log',
