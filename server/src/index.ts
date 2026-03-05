@@ -51,6 +51,9 @@ const app = express()
 const PORT = parseInt(config.PORT)
 const HOST = config.HOST
 
+// Trust proxy para Nginx/Reverse proxy
+app.set('trust proxy', 1)
+
 // ============================================
 // MIDDLEWARE DE SEGURIDAD
 // ============================================
