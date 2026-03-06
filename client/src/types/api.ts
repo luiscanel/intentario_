@@ -35,6 +35,7 @@ export interface Servidor {
   host: string
   nombreVM: string | null
   ip: string | null
+  tipo: string | null
   cpu: number | null
   memoria: string | null
   disco: string | null

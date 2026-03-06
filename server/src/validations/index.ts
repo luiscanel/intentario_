@@ -24,10 +24,10 @@ export type LoginInput = z.infer<typeof loginSchema>
 // ============================================
 
 export const servidorSchema = z.object({
-  pais: z.string().max(100).optional().nullable(),
   host: z.string().max(255).optional().nullable(),
   nombreVM: z.string().max(255).optional().nullable(),
   ip: z.string().max(45).optional().nullable(),
+  tipo: z.string().max(50).optional().nullable(),
   cpu: z.number().int().min(0).max(999).optional().nullable(),
   memoria: z.string().max(50).optional().nullable(),
   disco: z.string().max(50).optional().nullable(),
@@ -38,6 +38,7 @@ export const servidorSchema = z.object({
   antivirus: z.string().max(100).optional().nullable(),
   estado: z.enum(['Activo', 'Inactivo', 'Mantenimiento']).optional().nullable(),
   responsable: z.string().max(255).optional().nullable(),
+  pais: z.string().max(100).optional().nullable(),
 })
 
 export const servidorUpdateSchema = servidorSchema.partial()
@@ -311,10 +312,14 @@ export const cambioUpdateSchema = cambioSchema.partial()
 export const backupProgramadoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(255, 'Nombre muy largo'),
   tipo: z.enum(['completo', 'incremental', 'diferencial']).default('completo'),
-  destino: z.string().min(1, 'El destino es requerido').max(500, 'Destino muy largo'),
-  servidorId: z.number().int().positive().optional().nullable(),
-  cronograma: z.string().min(1, 'El cronograma es requerido').max(100, 'Cronograma muy largo'),
-  retencionDias: z.number().int().min(1).max(365).default(30),
+  frecuencia: z.enum(['daily', 'weekly', 'monthly']).default('daily'),
+  diaSemana: z.number().int().min(0).max(6).optional().nullable(),
+  diaMes: z.number().int().min(1).max(31).optional().nullable(),
+  hora: z.number().int().min(0).max(23).default(2),
+  minuto: z.number().int().min(0).max(59).default(0),
+  retenerDias: z.number().int().min(1).max(365).default(30),
+  notificaciones: z.boolean().default(true),
+  emailNotificacion: z.string().email().optional().nullable(),
   activo: z.boolean().default(true),
 })
 
@@ -325,16 +330,14 @@ export const backupProgramadoUpdateSchema = backupProgramadoSchema.partial()
 // ============================================
 
 export const costoSchema = z.object({
-  servidorId: z.number().int().positive().optional().nullable(),
-  tipo: z.enum(['hardware', 'software', 'licencia', 'mantenimiento', 'servicio', 'otro']).default('otro'),
-  descripcion: z.string().min(1, 'La descripción es requerida').max(500, 'Descripción muy larga'),
+  proveedor: z.string().min(1, 'El proveedor es requerido'),
+  cuenta: z.string().min(1, 'La cuenta es requerida'),
+  servicio: z.string().min(1, 'El servicio es requerido'),
+  region: z.string().optional().nullable(),
+  mes: z.string().min(1, 'El mes es requerido (YYYY-MM)'),
+  moneda: z.string().default('USD'),
   monto: z.number().min(0, 'El monto debe ser positivo'),
-  moneda: z.enum(['USD', 'EUR', 'COP']).default('USD'),
-  periodicidad: z.enum(['mensual', 'trimestral', 'semestral', 'anual', 'unico']).default('mensual'),
-  fechaInicio: z.string().min(1, 'La fecha de inicio es requerida'),
-  fechaFin: z.string().or(z.date()).optional().nullable(),
-  proveedorId: z.number().int().positive().optional().nullable(),
-  activo: z.boolean().default(true),
+  etiquetas: z.array(z.string()).optional().nullable(),
 })
 
 export const costoUpdateSchema = costoSchema.partial()

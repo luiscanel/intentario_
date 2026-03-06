@@ -91,6 +91,7 @@ model Servidor {
   host             String?
   nombreVM         String?
   ip               String?
+  tipo             String?
   cpu              Int?
   memoria          String?
   disco            String?
