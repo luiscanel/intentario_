@@ -124,7 +124,8 @@ export default function Admin() {
   const [rolForm, setRolForm] = useState({
     nombre: '',
     descripcion: '',
-    moduloIds: [] as number[]
+    moduloIds: [] as number[],
+    permisos: [] as { moduloId: number; accion: string }[]
   })
 
   const [moduloForm, setModuloForm] = useState({
@@ -443,14 +444,16 @@ export default function Admin() {
         await updateRol(editingRol.id, {
           nombre: rolForm.nombre,
           descripcion: rolForm.descripcion,
-          moduloIds: rolForm.moduloIds
+          moduloIds: rolForm.moduloIds,
+          permisos: rolForm.permisos
         })
         toast({ title: 'Rol actualizado correctamente' })
       } else {
         await createRol({
           nombre: rolForm.nombre,
           descripcion: rolForm.descripcion,
-          moduloIds: rolForm.moduloIds
+          moduloIds: rolForm.moduloIds,
+          permisos: rolForm.permisos
         })
         toast({ title: 'Rol creado correctamente' })
       }
@@ -476,11 +479,18 @@ export default function Admin() {
 
   const openRolDialog = (rol?: Rol) => {
     if (rol) {
+      // Los permisos ya vienen en la respuesta del rol
+      const permisosDelRol = (rol as any).permisos?.map((p: any) => ({
+        moduloId: p.moduloId,
+        accion: p.accion
+      })) || []
+      
       setEditingRol(rol)
       setRolForm({
         nombre: rol.nombre,
         descripcion: rol.descripcion || '',
-        moduloIds: rol.modulos?.map(m => m.id) || []
+        moduloIds: rol.modulos?.map(m => m.id) || [],
+        permisos: permisosDelRol
       })
     } else {
       resetRolForm()
@@ -490,7 +500,7 @@ export default function Admin() {
 
   const resetRolForm = () => {
     setEditingRol(null)
-    setRolForm({ nombre: '', descripcion: '', moduloIds: [] })
+    setRolForm({ nombre: '', descripcion: '', moduloIds: [], permisos: [] })
   }
 
   // ========================
@@ -1206,37 +1216,62 @@ export default function Admin() {
               
               {permisos && (
                 <div className="space-y-2">
-                  <Label>Módulos del Rol</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto border p-2 rounded">
+                  <Label>Permisos del Rol</Label>
+                  <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto border p-2 rounded">
                     {permisos.modulos.map((modulo) => {
-                      const isSelected = rolForm.moduloIds.includes(modulo.id)
+                      const isModuleSelected = rolForm.moduloIds.includes(modulo.id)
+                      const modulePermissions = rolForm.permisos.filter(p => p.moduloId === modulo.id).map(p => p.accion)
+                      const availableActions = permisos.grouped[modulo.nombre]?.map((p: any) => p.accion) || ['ver', 'crear', 'editar', 'eliminar', 'exportar']
+                      
                       return (
-                        <div 
-                          key={modulo.id}
-                          className={`flex items-center gap-2 p-2 rounded cursor-pointer ${isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-gray-100'}`}
-                          onClick={() => {
-                            setRolForm(prev => ({
-                              ...prev,
-                              moduloIds: prev.moduloIds.includes(modulo.id)
-                                ? prev.moduloIds.filter(id => id !== modulo.id)
-                                : [...prev.moduloIds, modulo.id]
-                            }))
-                          }}
-                        >
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected}
-                            onChange={() => {
-                              setRolForm(prev => ({
-                                ...prev,
-                                moduloIds: prev.moduloIds.includes(modulo.id)
-                                  ? prev.moduloIds.filter(id => id !== modulo.id)
-                                  : [...prev.moduloIds, modulo.id]
-                              }))
+                        <div key={modulo.id} className={`p-2 rounded border ${isModuleSelected ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
+                          <div 
+                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={() => {
+                              const newModuloIds = isModuleSelected
+                                ? rolForm.moduloIds.filter(id => id !== modulo.id)
+                                : [...rolForm.moduloIds, modulo.id]
+                              // Agregar o quitar todos los permisos según el módulo
+                              const newPermisos = isModuleSelected
+                                ? rolForm.permisos.filter(p => p.moduloId !== modulo.id)
+                                : [
+                                    ...rolForm.permisos.filter(p => p.moduloId !== modulo.id),
+                                    ...availableActions.map((accion: string) => ({ moduloId: modulo.id, accion }))
+                                  ]
+                              setRolForm(prev => ({ ...prev, moduloIds: newModuloIds, permisos: newPermisos }))
                             }}
-                            className="sr-only"
-                          />
-                          <span className="text-sm">{modulo.nombre}</span>
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={isModuleSelected}
+                              onChange={() => {}}
+                              className="rounded"
+                            />
+                            <span className="text-sm font-medium">{modulo.nombre}</span>
+                          </div>
+                          {isModuleSelected && (
+                            <div className="ml-6 mt-1 flex flex-wrap gap-2">
+                              {availableActions.map((accion: string) => {
+                                const hasPermission = modulePermissions.includes(accion)
+                                return (
+                                  <label key={accion} className="flex items-center gap-1 text-xs cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={hasPermission}
+                                      onChange={(e) => {
+                                        const newPermisos = e.target.checked
+                                          ? [...rolForm.permisos, { moduloId: modulo.id, accion }]
+                                          : rolForm.permisos.filter(p => !(p.moduloId === modulo.id && p.accion === accion))
+                                        setRolForm(prev => ({ ...prev, permisos: newPermisos }))
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <span className={hasPermission ? 'text-green-600' : 'text-gray-500'}>{accion}</span>
+                                  </label>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
                       )
                     })}

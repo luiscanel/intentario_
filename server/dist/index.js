@@ -73,6 +73,8 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = parseInt(index_js_1.config.PORT);
 const HOST = index_js_1.config.HOST;
+// Trust proxy para Nginx/Reverse proxy
+app.set('trust proxy', 1);
 // ============================================
 // MIDDLEWARE DE SEGURIDAD
 // ============================================

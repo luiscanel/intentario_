@@ -322,7 +322,7 @@ export async function getPermisos() {
   return handleResponse<any>(res)
 }
 
-export async function createRol(data: { nombre: string; descripcion?: string; moduloIds?: number[] }) {
+export async function createRol(data: { nombre: string; descripcion?: string; moduloIds?: number[]; permisos?: { moduloId: number; accion: string }[] }) {
   const res = await fetch(`${API_URL}/admin/roles`, {
     method: 'POST',
     headers: getHeaders(),
@@ -331,7 +331,7 @@ export async function createRol(data: { nombre: string; descripcion?: string; mo
   return handleResponse<any>(res)
 }
 
-export async function updateRol(id: number, data: { nombre?: string; descripcion?: string; moduloIds?: number[] }) {
+export async function updateRol(id: number, data: { nombre?: string; descripcion?: string; moduloIds?: number[]; permisos?: { moduloId: number; accion: string }[] }) {
   const res = await fetch(`${API_URL}/admin/roles/${id}`, {
     method: 'PUT',
     headers: getHeaders(),

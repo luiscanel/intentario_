@@ -126,6 +126,7 @@ router.get('/roles', async (req, res) => {
     const roles = await prisma.rol.findMany({
       include: {
         roles: { include: { modulo: true } },
+        permisos: { include: { modulo: true } },
         usuarios: true
       },
       orderBy: { nombre: 'asc' }
@@ -135,7 +136,8 @@ router.get('/roles', async (req, res) => {
       data: roles.map(r => ({
         ...r,
         usuariosCount: r.usuarios.length,
-        modulos: r.roles.map(rm => rm.modulo)
+        modulos: r.roles.map(rm => rm.modulo),
+        permisos: r.permisos.map(p => ({ moduloId: p.moduloId, modulo: p.modulo, accion: p.accion }))
       }))
     })
   } catch (error) {
@@ -167,11 +169,27 @@ router.get('/permisos', async (req, res) => {
 // Create rol
 router.post('/roles', async (req, res) => {
   try {
-    const { nombre, descripcion, moduloIds } = req.body
+    const { nombre, descripcion, moduloIds, permisos } = req.body
 
     const existing = await prisma.rol.findUnique({ where: { nombre } })
     if (existing) {
       return res.status(400).json({ success: false, message: 'Ya existe un rol con ese nombre', code: 'DUPLICATE_ROLE' })
+    }
+
+    // Si no se proporcionan permisos explícitos, crear permisos por defecto para cada módulo
+    let permisosData: any[] = []
+    if (permisos && permisos.length > 0) {
+      // permisos es array de { moduloId, accion }
+      permisosData = permisos
+    } else if (moduloIds && moduloIds.length > 0) {
+      // Por defecto, dar todos los permisos (ver, crear, editar, eliminar, exportar) a cada módulo
+      const acciones = ['ver', 'crear', 'editar', 'eliminar', 'exportar']
+      permisosData = []
+      for (const moduloId of moduloIds) {
+        for (const accion of acciones) {
+          permisosData.push({ moduloId, accion })
+        }
+      }
     }
 
     const rol = await prisma.rol.create({
@@ -181,9 +199,15 @@ router.post('/roles', async (req, res) => {
         esBase: false,
         roles: moduloIds?.length ? {
           create: moduloIds.map((moduloId: number) => ({ moduloId }))
+        } : undefined,
+        permisos: permisosData.length > 0 ? {
+          create: permisosData
         } : undefined
       },
-      include: { roles: { include: { modulo: true } } }
+      include: { 
+        roles: { include: { modulo: true } },
+        permisos: { include: { modulo: true } }
+      }
     })
 
     res.status(201).json({ success: true, data: rol })
@@ -197,7 +221,7 @@ router.post('/roles', async (req, res) => {
 router.put('/roles/:id', async (req, res) => {
   try {
     const { id } = req.params
-    const { nombre, descripcion, moduloIds } = req.body
+    const { nombre, descripcion, moduloIds, permisos } = req.body
 
     // Actualizar módulos del rol
     if (moduloIds !== undefined) {
@@ -209,6 +233,20 @@ router.put('/roles/:id', async (req, res) => {
       }
     }
 
+    // Actualizar permisos del rol
+    if (permisos !== undefined) {
+      await prisma.permiso.deleteMany({ where: { rolId: parseInt(id) } })
+      if (permisos.length > 0) {
+        await prisma.permiso.createMany({
+          data: permisos.map((p: { moduloId: number; accion: string }) => ({ 
+            rolId: parseInt(id), 
+            moduloId: p.moduloId, 
+            accion: p.accion 
+          }))
+        })
+      }
+    }
+
     const updateData: any = {}
     if (nombre) updateData.nombre = nombre
     if (descripcion !== undefined) updateData.descripcion = descripcion
@@ -216,7 +254,10 @@ router.put('/roles/:id', async (req, res) => {
     const rol = await prisma.rol.update({
       where: { id: parseInt(id) },
       data: updateData,
-      include: { roles: { include: { modulo: true } } }
+      include: { 
+        roles: { include: { modulo: true } },
+        permisos: { include: { modulo: true } }
+      }
     })
 
     res.json({ success: true, data: rol })

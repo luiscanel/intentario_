@@ -7,6 +7,31 @@ const index_js_1 = require("../validations/index.js");
 const auditLogService_js_1 = require("../services/auditLogService.js");
 const router = (0, express_1.Router)();
 router.use(auth_1.authMiddleware);
+// Obtener servidor por ID
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const servidor = await index_1.prisma.servidor.findUnique({
+            where: { id: parseInt(id) }
+        });
+        if (!servidor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Servidor no encontrado',
+                code: 'NOT_FOUND'
+            });
+        }
+        res.json({ success: true, data: servidor });
+    }
+    catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener servidor',
+            code: 'GET_ERROR'
+        });
+    }
+});
 // Obtener todos los servidores (con paginación y filtros)
 router.get('/', async (req, res) => {
     try {

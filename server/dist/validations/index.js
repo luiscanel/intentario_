@@ -22,10 +22,10 @@ exports.loginSchema = zod_1.z.object({
 // SERVidores VALIDATION
 // ============================================
 exports.servidorSchema = zod_1.z.object({
-    pais: zod_1.z.string().max(100).optional().nullable(),
     host: zod_1.z.string().max(255).optional().nullable(),
     nombreVM: zod_1.z.string().max(255).optional().nullable(),
     ip: zod_1.z.string().max(45).optional().nullable(),
+    tipo: zod_1.z.string().max(50).optional().nullable(),
     cpu: zod_1.z.number().int().min(0).max(999).optional().nullable(),
     memoria: zod_1.z.string().max(50).optional().nullable(),
     disco: zod_1.z.string().max(50).optional().nullable(),
@@ -36,6 +36,7 @@ exports.servidorSchema = zod_1.z.object({
     antivirus: zod_1.z.string().max(100).optional().nullable(),
     estado: zod_1.z.enum(['Activo', 'Inactivo', 'Mantenimiento']).optional().nullable(),
     responsable: zod_1.z.string().max(255).optional().nullable(),
+    pais: zod_1.z.string().max(100).optional().nullable(),
 });
 exports.servidorUpdateSchema = exports.servidorSchema.partial();
 exports.servidorImportSchema = zod_1.z.object({
@@ -269,10 +270,14 @@ exports.cambioUpdateSchema = exports.cambioSchema.partial();
 exports.backupProgramadoSchema = zod_1.z.object({
     nombre: zod_1.z.string().min(1, 'El nombre es requerido').max(255, 'Nombre muy largo'),
     tipo: zod_1.z.enum(['completo', 'incremental', 'diferencial']).default('completo'),
-    destino: zod_1.z.string().min(1, 'El destino es requerido').max(500, 'Destino muy largo'),
-    servidorId: zod_1.z.number().int().positive().optional().nullable(),
-    cronograma: zod_1.z.string().min(1, 'El cronograma es requerido').max(100, 'Cronograma muy largo'),
-    retencionDias: zod_1.z.number().int().min(1).max(365).default(30),
+    frecuencia: zod_1.z.enum(['daily', 'weekly', 'monthly']).default('daily'),
+    diaSemana: zod_1.z.number().int().min(0).max(6).optional().nullable(),
+    diaMes: zod_1.z.number().int().min(1).max(31).optional().nullable(),
+    hora: zod_1.z.number().int().min(0).max(23).default(2),
+    minuto: zod_1.z.number().int().min(0).max(59).default(0),
+    retenerDias: zod_1.z.number().int().min(1).max(365).default(30),
+    notificaciones: zod_1.z.boolean().default(true),
+    emailNotificacion: zod_1.z.string().email().optional().nullable(),
     activo: zod_1.z.boolean().default(true),
 });
 exports.backupProgramadoUpdateSchema = exports.backupProgramadoSchema.partial();
@@ -280,16 +285,14 @@ exports.backupProgramadoUpdateSchema = exports.backupProgramadoSchema.partial();
 // COSTOS VALIDATION
 // ============================================
 exports.costoSchema = zod_1.z.object({
-    servidorId: zod_1.z.number().int().positive().optional().nullable(),
-    tipo: zod_1.z.enum(['hardware', 'software', 'licencia', 'mantenimiento', 'servicio', 'otro']).default('otro'),
-    descripcion: zod_1.z.string().min(1, 'La descripción es requerida').max(500, 'Descripción muy larga'),
+    proveedor: zod_1.z.string().min(1, 'El proveedor es requerido'),
+    cuenta: zod_1.z.string().min(1, 'La cuenta es requerida'),
+    servicio: zod_1.z.string().min(1, 'El servicio es requerido'),
+    region: zod_1.z.string().optional().nullable(),
+    mes: zod_1.z.string().min(1, 'El mes es requerido (YYYY-MM)'),
+    moneda: zod_1.z.string().default('USD'),
     monto: zod_1.z.number().min(0, 'El monto debe ser positivo'),
-    moneda: zod_1.z.enum(['USD', 'EUR', 'COP']).default('USD'),
-    periodicidad: zod_1.z.enum(['mensual', 'trimestral', 'semestral', 'anual', 'unico']).default('mensual'),
-    fechaInicio: zod_1.z.string().min(1, 'La fecha de inicio es requerida'),
-    fechaFin: zod_1.z.string().or(zod_1.z.date()).optional().nullable(),
-    proveedorId: zod_1.z.number().int().positive().optional().nullable(),
-    activo: zod_1.z.boolean().default(true),
+    etiquetas: zod_1.z.array(zod_1.z.string()).optional().nullable(),
 });
 exports.costoUpdateSchema = exports.costoSchema.partial();
 // ============================================

@@ -38,6 +38,7 @@ import {
   errorHandler,
   requestLogger
 } from './middleware/security.js'
+import { sanitizeInput } from './utils/apiResponse.js'
 
 // Importar servicio de notificaciones
 import { startNotificationService } from './services/notificacionesService.js'
@@ -75,6 +76,9 @@ app.use(express.json({ limit: '10mb' }))
 
 // Parser para form data
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Sanitización de inputs (SQL injection, XSS)
+app.use(sanitizeInput)
 
 // Compresión gzip para respuestas
 app.use(compression({
