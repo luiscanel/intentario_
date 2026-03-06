@@ -25,7 +25,7 @@ NC='\033[0m'
 APP_USER="inventario"
 APP_PASSWORD="123456789"
 ROOT_PASSWORD="123456789"
-GIT_REPO="https://github.com/luiscanel/Inventario-Almo.git"
+GIT_REPO="https://github.com/luiscanel/intentario_.git"
 APP_DIR="/opt/inventario-almo"
 
 # Puertos (NO CAMBIAR)

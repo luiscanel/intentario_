@@ -16,7 +16,7 @@ Sistema de gestión de inventario para Grupo Almo.
 ssh root@192.168.0.X
 
 # 2. Descargar y ejecutar el script de instalación
-curl -fsSL https://raw.githubusercontent.com/luiscanel/Inventario-Almo/master/install_dedicated.sh -o /tmp/install.sh
+curl -fsSL https://raw.githubusercontent.com/luiscanel/intentario_/master/install_dedicated.sh -o /tmp/install.sh
 bash /tmp/install.sh
 ```
 
@@ -39,7 +39,7 @@ echo "inventario:123456789" | chpasswd
 
 # 5. Clonar proyecto
 cd /opt
-git clone https://github.com/luiscanel/Inventario-Almo.git inventario-almo
+git clone https://github.com/luiscanel/intentario_.git inventario-almo
 cd inventario-almo
 chown -R inventario:inventario .
 
@@ -127,8 +127,8 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 
 # 2. Clonar proyecto
-git clone https://github.com/luiscanel/Inventario-Almo.git
-cd Inventario-Almo
+git clone https://github.com/luiscanel/intentario_.git
+cd intentario_
 
 # 3. Configurar variables de entorno
 cp server/.env.example server/.env
