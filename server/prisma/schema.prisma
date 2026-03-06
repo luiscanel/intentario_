@@ -102,6 +102,7 @@ model Servidor {
   antivirus        String?
   estado           String?
   responsable      String?
+  fechaGarantia    DateTime?
   documentos       Documento[]
   certificadosSSL  CertificadoSSL[]
   licencias        Licencia[]
@@ -464,4 +465,25 @@ model CostoCloud {
   createdAt     DateTime  @default(now())
   
   @@unique([proveedor, cuenta, servicio, region, mes])
+}
+
+// ============================================
+// CONFIGURACIÓN DE ALERTAS
+// ============================================
+model ConfigAlerta {
+  id                Int       @id @default(autoincrement())
+  tipo              String    // "servidor_caido", "contrato_vencer", "licencia_vencer", "certificado_vencer", "garantia_vencer"
+  nombre            String
+  diasAntelacion    Int       @default(30)  // Días de anticipación
+  diasVerificacion  Int       @default(30)  // Cada cuántos días verificar
+  activo            Boolean   @default(true)
+  enviarEmail       Boolean   @default(true)
+  crearAlerta       Boolean   @default(true)
+  emailDestino      String?   // Email adicional para notificaciones
+  
+  creadoPor         Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([tipo])
 }

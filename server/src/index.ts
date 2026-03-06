@@ -26,6 +26,7 @@ import cambiosRoutes from './routes/nuevos/cambios'
 import backupsProgramadosRoutes from './routes/nuevos/backups'
 import costosRoutes from './routes/nuevos/costos'
 import serviciosRoutes from './routes/nuevos/monitor'
+import configAlertasRoutes from './routes/configAlertas'
 
 // Importar configuración y seguridad
 import { config } from './config/index.js'
@@ -148,6 +149,7 @@ app.use('/api/documentos', documentosRoutes)
 
 // Nuevos módulos
 app.use('/api/certificados', certificadosRoutes)
+app.use('/api/alertas', configAlertasRoutes)
 app.use('/api/cambios', cambiosRoutes)
 app.use('/api/backups-programados', backupsProgramadosRoutes)
 app.use('/api/costos', costosRoutes)

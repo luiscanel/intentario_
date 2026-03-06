@@ -79,7 +79,7 @@ export default function Admin() {
   const [roles, setRoles] = useState<Rol[]>([])
   const [permisos, setPermisos] = useState<PermisoData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'usuarios' | 'modulos' | 'roles' | 'email' | 'backups'>('usuarios')
+  const [activeTab, setActiveTab] = useState<'usuarios' | 'modulos' | 'roles' | 'email' | 'backups' | 'configAlertas'>('usuarios')
   
   // Email state
   const [emailConfig, setEmailConfig] = useState<EmailConfig>({
@@ -103,6 +103,12 @@ export default function Admin() {
   const [creatingBackup, setCreatingBackup] = useState(false)
   const [restoringBackup, setRestoringBackup] = useState(false)
   const [backupToRestore, setBackupToRestore] = useState<Backup | null>(null)
+  
+  // Config alertas state
+  const [configAlertas, setConfigAlertas] = useState<any[]>([])
+  const [configAlertasLoading, setConfigAlertasLoading] = useState(false)
+  const [editingConfigAlerta, setEditingConfigAlerta] = useState<any>(null)
+  const [isConfigAlertaDialogOpen, setIsConfigAlertaDialogOpen] = useState(false)
   
   // Dialogs
   const [isUsuarioDialogOpen, setIsUsuarioDialogOpen] = useState(false)
@@ -304,6 +310,45 @@ export default function Admin() {
       console.error('Error:', error)
     } finally {
       setBackupsLoading(false)
+    }
+  }
+  
+  const loadConfigAlertas = async () => {
+    setConfigAlertasLoading(true)
+    try {
+      const res = await fetch('/api/alertas/config-alertas', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      const data = await res.json()
+      if (data.success) {
+        setConfigAlertas(data.data)
+      }
+    } catch (error) {
+      console.error('Error cargando config alertas:', error)
+    } finally {
+      setConfigAlertasLoading(false)
+    }
+  }
+  
+  const saveConfigAlerta = async (config: any) => {
+    try {
+      const res = await fetch(`/api/alertas/config-alertas/${config.tipo}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(config)
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast({ title: 'Configuración guardada correctamente' })
+        loadConfigAlertas()
+      } else {
+        throw new Error(data.message)
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message })
     }
   }
 
@@ -1321,6 +1366,146 @@ export default function Admin() {
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               {restoringBackup ? 'Restaurando...' : 'Restaurar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* CONFIG ALERTAS TAB */}
+      {activeTab === 'configAlertas' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de Alertas</CardTitle>
+            <CardDescription>Configure las alertas automáticas del sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {configAlertasLoading ? (
+              <div className="text-center py-8">Cargando...</div>
+            ) : (
+              <div className="space-y-4">
+                {configAlertas.map((config) => (
+                  <div key={config.tipo} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg">{config.nombre}</h3>
+                        <p className="text-sm text-gray-500">{config.tipo}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={config.activo}
+                            onChange={(e) => saveConfigAlerta({...config, activo: e.target.checked})}
+                            className="rounded"
+                          />
+                          <span className="text-sm">Activo</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label>Días de anticipación</Label>
+                        <Input
+                          type="number"
+                          value={config.diasAntelacion}
+                          onChange={(e) => saveConfigAlerta({...config, diasAntelacion: parseInt(e.target.value)})}
+                          min={0}
+                          max={365}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Días antes de vencer para alertar</p>
+                      </div>
+                      <div>
+                        <Label>Email adicional (opcional)</Label>
+                        <Input
+                          type="email"
+                          value={config.emailDestino || ''}
+                          onChange={(e) => saveConfigAlerta({...config, emailDestino: e.target.value})}
+                          placeholder="otro@email.com"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={config.enviarEmail}
+                            onChange={(e) => saveConfigAlerta({...config, enviarEmail: e.target.checked})}
+                            className="rounded"
+                          />
+                          <span className="text-sm">Enviar email</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={config.crearAlerta}
+                            onChange={(e) => saveConfigAlerta({...config, crearAlerta: e.target.checked})}
+                            className="rounded"
+                          />
+                          <span className="text-sm">Crear alerta en sistema</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* CONFIG ALERTA DIALOG */}
+      <Dialog open={isConfigAlertaDialogOpen} onOpenChange={setIsConfigAlertaDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Alerta</DialogTitle>
+          </DialogHeader>
+          {editingConfigAlerta && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Días de anticipación</Label>
+                <Input
+                  type="number"
+                  value={editingConfigAlerta.diasAntelacion}
+                  onChange={(e) => setEditingConfigAlerta({...editingConfigAlerta, diasAntelacion: parseInt(e.target.value)})}
+                  min={0}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email adicional</Label>
+                <Input
+                  type="email"
+                  value={editingConfigAlerta.emailDestino || ''}
+                  onChange={(e) => setEditingConfigAlerta({...editingConfigAlerta, emailDestino: e.target.value})}
+                />
+              </div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editingConfigAlerta.activo}
+                  onChange={(e) => setEditingConfigAlerta({...editingConfigAlerta, activo: e.target.checked})}
+                />
+                <span>Activo</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editingConfigAlerta.enviarEmail}
+                  onChange={(e) => setEditingConfigAlerta({...editingConfigAlerta, enviarEmail: e.target.checked})}
+                />
+                <span>Enviar email</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editingConfigAlerta.crearAlerta}
+                  onChange={(e) => setEditingConfigAlerta({...editingConfigAlerta, crearAlerta: e.target.checked})}
+                />
+                <span>Crear alerta en sistema</span>
+              </label>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfigAlertaDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={() => { saveConfigAlerta(editingConfigAlerta); setIsConfigAlertaDialogOpen(false); }}>
+              Guardar
             </Button>
           </DialogFooter>
         </DialogContent>
