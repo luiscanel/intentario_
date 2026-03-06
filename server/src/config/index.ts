@@ -18,7 +18,7 @@ const envSchema = z.object({
   
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().default('15 minutes'),
-  RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
+  RATE_LIMIT_MAX_REQUESTS: z.string().default('1000'),
   
   // Rate Limiting Auth (más estricto)
   AUTH_RATE_LIMIT_MAX: z.string().default('5'),

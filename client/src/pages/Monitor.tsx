@@ -23,16 +23,44 @@ export default function Monitor() {
   const [pingLoading, setPingLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ ip: '', nombre: '' })
+  const [autoPing, setAutoPing] = useState(true)
   const { toast } = useToast()
 
   useEffect(() => {
     cargarMonitoreo()
   }, [])
 
+  // Auto-ping cada 10 segundos
+  useEffect(() => {
+    if (!autoPing || monitoreo.length === 0) return
+    
+    const interval = setInterval(() => {
+      console.log('Auto-ping ejecutándose...')
+      ejecutarPingAllSilencioso()
+    }, 10000)
+    
+    return () => clearInterval(interval)
+  }, [autoPing, monitoreo.length])
+
+  const ejecutarPingAllSilencioso = async () => {
+    try {
+      console.log('Auto-ping ejecutándose...')
+      await pingAll()
+      console.log('Auto-ping completado, recargando datos...')
+      await cargarMonitoreo()
+      console.log('Auto-ping datos actualizados')
+    } catch (error) {
+      console.error('Auto-ping error:', error)
+    }
+  }
+
   const cargarMonitoreo = async () => {
+    console.log('Cargando monitoreo...')
     try {
       const data = await getMonitor()
+      console.log('Datos recibidos:', data)
       setMonitoreo(data)
+      console.log('Estado actualizado')
     } catch (error) {
       console.error('Error:', error)
       setMonitoreo([])
@@ -66,14 +94,17 @@ export default function Monitor() {
   }
 
   const ejecutarPingAll = async () => {
+    console.log('Ejecutando ping...')
     setPingLoading(true)
     try {
       const res = await pingAll()
+      console.log('Ping resultado:', res)
       const { online, offline } = res
       toast({ title: `Ping completado: ${online} online, ${offline} offline` })
       cargarMonitoreo()
-    } catch (error) {
-      toast({ title: 'Error al hacer ping', variant: 'destructive' })
+    } catch (error: any) {
+      console.error('Error ping:', error)
+      toast({ title: 'Error al hacer ping', description: error.message, variant: 'destructive' })
     } finally {
       setPingLoading(false)
     }
@@ -95,7 +126,18 @@ export default function Monitor() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Monitor de Disponibilidad</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Monitor de Disponibilidad</h1>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={autoPing} 
+              onChange={(e) => setAutoPing(e.target.checked)}
+              className="w-4 h-4"
+            />
+            Auto-ping (10s)
+          </label>
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={cargarMonitoreo}>Actualizar</Button>
           <Button variant="outline" onClick={ejecutarPingAll} disabled={pingLoading}>

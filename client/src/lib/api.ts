@@ -38,21 +38,16 @@ async function handleResponse<T>(response: Response): Promise<T> {
   }
   const json = await response.json()
   // Si la respuesta tiene estructura { success, data }, extraer data
-  if (json && typeof json === 'object' && 'data' in json) {
-    const data = json.data
-    // Si es un array, asegurar que siempre sea array (nunca null/undefined)
-    if (Array.isArray(data)) {
-      return data as T
-    }
-    // Si es null/undefined, devolver array vacío
+  if (json && typeof json === 'object' && 'success' in json) {
+    const data = (json as any).data
+    // Si es null/undefined, devolver array vacío o null según corresponda
     if (data === null || data === undefined) {
-      return [] as T
+      return null as T
     }
     return data as T
   }
-  // Si json es null o undefined, devolver valor por defecto según el tipo esperado
+  // Si json es null o undefined, devolver valor por defecto
   if (json === null || json === undefined) {
-    // Retornar array vacío por defecto para tipos de array
     return [] as T
   }
   return json as T
@@ -561,8 +556,7 @@ export async function downloadBackup(filename: string): Promise<Blob> {
 // ============================================
 export async function getProveedores() {
   const res = await fetch(`${API_URL}/proveedores`, { headers: getHeaders() })
-  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
-  return json?.data || []
+  return handleResponse<any[]>(res)
 }
 
 export async function createProveedor(data: any) {
@@ -593,8 +587,7 @@ export async function deleteProveedor(id: number) {
 // ============================================
 export async function getLicencias() {
   const res = await fetch(`${API_URL}/licencias`, { headers: getHeaders() })
-  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
-  return json?.data || []
+  return handleResponse<any[]>(res)
 }
 
 export async function createLicencia(data: any) {
@@ -625,8 +618,7 @@ export async function deleteLicencia(id: number) {
 // ============================================
 export async function getContratos() {
   const res = await fetch(`${API_URL}/contratos`, { headers: getHeaders() })
-  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
-  return json?.data || []
+  return handleResponse<any[]>(res)
 }
 
 export async function createContrato(data: any) {
@@ -657,8 +649,7 @@ export async function deleteContrato(id: number) {
 // ============================================
 export async function getAlertas() {
   const res = await fetch(`${API_URL}/alertas`, { headers: getHeaders() })
-  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
-  return json?.data || []
+  return handleResponse<any[]>(res)
 }
 
 export async function marcarAlertaLeida(id: number) {
@@ -686,9 +677,9 @@ export async function deleteAlerta(id: number) {
 // MONITOR
 // ============================================
 export async function getMonitor() {
-  const res = await fetch(`${API_URL}/monitor`, { headers: getHeaders() })
-  const json = await handleResponse<{ success: boolean; data: any[] }>(res)
-  return json?.data || []
+  const res = await fetch(`${API_URL}/monitor?_t=${Date.now()}`, { headers: getHeaders() })
+  const data = await handleResponse<any[]>(res)
+  return data || []
 }
 
 export async function addMonitor(data: { ip: string; nombre?: string }) {
@@ -707,10 +698,15 @@ export async function deleteMonitor(id: number) {
 }
 
 export async function pingAll() {
-  return handleResponse<{ success: boolean; total: number; online: number; offline: number }>(await fetch(`${API_URL}/monitor/ping-all`, {
+  const res = await fetch(`${API_URL}/monitor/ping-all`, {
     method: 'POST',
     headers: getHeaders()
-  }))
+  })
+  const json = await res.json()
+  if (!res.ok) {
+    throw new Error(json.message || 'Error en ping')
+  }
+  return json
 }
 
 // ============================================
@@ -718,8 +714,8 @@ export async function pingAll() {
 // ============================================
 export async function getAuditLogs(page = 1, limit = 100) {
   const res = await fetch(`${API_URL}/admin/audit?page=${page}&limit=${limit}`, { headers: getHeaders() })
-  const json = await handleResponse<{ success: boolean; data: any[]; pagination?: any }>(res)
-  return json?.data || []
+  const result = await handleResponse<{ data: any[]; pagination?: any }>(res)
+  return result?.data || []
 }
 
 // ============================================
