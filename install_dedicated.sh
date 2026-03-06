@@ -58,6 +58,22 @@ echo ""
 echo -e "${YELLOW}IP detectada: ${GREEN}$SERVER_IP${NC}"
 
 # -----------------------------------------------------------------------------
+# Verificar instalación previa
+# -----------------------------------------------------------------------------
+if [ -d "$APP_DIR" ] && [ -f "$APP_DIR/server/.env" ]; then
+    echo ""
+    echo -e "${YELLOW}⚠️  Instalación previa detectada en $APP_DIR${NC}"
+    echo -e "${YELLOW}⚠️  Esto puede sobrescribir configuración y dependencias${NC}"
+    echo ""
+    read -p "¿Continuar de todos modos? (s/N): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+        echo "Instalación cancelada."
+        exit 0
+    fi
+fi
+
+# -----------------------------------------------------------------------------
 # Verificar root
 # -----------------------------------------------------------------------------
 if [ "$EUID" -ne 0 ]; then
