@@ -87,6 +87,8 @@ apt install -y \
     ca-certificates \
     lsb-release \
     build-essential \
+    python3 \
+    python3-pip \
     nginx \
     ufw \
     fail2ban \
@@ -147,7 +149,14 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 echo -e "${YELLOW}[7/16] Instalando dependencias npm...${NC}"
 
 cd "$APP_DIR"
-npm install
+
+# Instalar como root primero para compilar módulos nativos
+npm install --unsafe-perm
+
+# Recompilar módulos nativos como el usuario inventario
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/node_modules"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/server/node_modules" 2>/dev/null || true
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/client/node_modules" 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # Configurar variables de entorno (con HTTPS y ruta ABSOLUTA)
