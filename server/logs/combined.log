@@ -209,3 +209,9 @@
 2026-03-05 14:48:15 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
 2026-03-05 14:50:10 [INFO]: Recibida señal SIGTERM. Cerrando servidor...
 2026-03-05 14:50:10 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 17:00:20 [INFO]: Recibida señal SIGTERM. Cerrando servidor...
+2026-03-05 17:00:21 [INFO]: Inventario Almo iniciado {"environment":"development","port":3001,"host":"0.0.0.0","rateLimit":"100 req/15 minutes"}
+2026-03-05 19:54:25 [WARN]: Auth: Token expired {"path":"/stats","ip":"127.0.0.1"}
+2026-03-05 19:54:25 [WARN]: Request error {"method":"GET","path":"/stats","status":401,"duration":"10ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
+2026-03-05 19:54:25 [WARN]: Auth: Token expired {"path":"/stats","ip":"127.0.0.1"}
+2026-03-05 19:54:25 [WARN]: Request error {"method":"GET","path":"/stats","status":401,"duration":"2ms","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0"}
