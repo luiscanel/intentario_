@@ -16,7 +16,21 @@ NC='\033[0m'
 
 # Variables
 APP_DIR="/opt/inventario-almo"
-SERVER_IP="192.168.0.12"
+
+# Detectar IP automáticamente
+detect_ip() {
+    local ip
+    ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    if [ -z "$ip" ]; then
+        ip=$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K[^ ]+' )
+    fi
+    if [ -z "$ip" ]; then
+        ip=$(curl -s ifconfig.me 2>/dev/null || echo "127.0.0.1")
+    fi
+    echo "$ip"
+}
+
+SERVER_IP=$(detect_ip)
 
 # Puertos (importante: deben coincidir)
 BACKEND_PORT=3001
