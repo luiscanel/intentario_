@@ -9,6 +9,9 @@ set -e
 # ============================================
 # CONFIGURACIÓN (Editar según necesidad)
 # ============================================
+# Modo de ejecución: "remote" (desde otra PC) o "local" (dentro del servidor)
+EXEC_MODE="${EXEC_MODE:-remote}"
+
 # Valores por defecto - cambiar para producción
 SERVER_IP="${SERVER_IP:-}"
 SSH_USER="${SSH_USER:-inventario}"
@@ -17,15 +20,21 @@ GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkAN
 PROJECT_DIR="/opt/inventario-almo"
 
 # Si no se pasaron credenciales, solicitarlas interactivamente
-if [ -z "$SERVER_IP" ]; then
-    echo -n "Ingrese la IP del servidor: "
-    read SERVER_IP
-fi
+if [ "$EXEC_MODE" = "remote" ]; then
+    if [ -z "$SERVER_IP" ]; then
+        echo -n "Ingrese la IP del servidor: "
+        read SERVER_IP
+    fi
 
-if [ -z "$SSH_PASS" ]; then
-    echo -n "Ingrese la contraseña SSH: "
-    read -s SSH_PASS
-    echo
+    if [ -z "$SSH_PASS" ]; then
+        echo -n "Ingrese la contraseña SSH: "
+        read -s SSH_PASS
+        echo
+    fi
+else
+    # Modo local - detectar IP automáticamente
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    echo "Modo local detectado. IP: $SERVER_IP"
 fi
 
 PROJECT_REPO="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
@@ -56,15 +65,27 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # ============================================
 
 cmd_ssh() {
-    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 $SSH_USER@$SERVER_IP "$1" 2>/dev/null
+    if [ "$EXEC_MODE" = "local" ]; then
+        bash -c "$1" 2>/dev/null
+    else
+        sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 $SSH_USER@$SERVER_IP "$1" 2>/dev/null
+    fi
 }
 
 cmd_sudo() {
-    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP "echo '$SSH_PASS' | sudo -S bash -c '$1'" 2>&1
+    if [ "$EXEC_MODE" = "local" ]; then
+        echo "$SSH_PASS" | sudo -S bash -c "$1" 2>&1
+    else
+        sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP "echo '$SSH_PASS' | sudo -S bash -c '$1'" 2>&1
+    fi
 }
 
 cmd_scp() {
-    sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no "$1" $SSH_USER@$SERVER_IP:"$2" 2>/dev/null
+    if [ "$EXEC_MODE" = "local" ]; then
+        cp "$1" "$2"
+    else
+        sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no "$1" $SSH_USER@$SERVER_IP:"$2" 2>/dev/null
+    fi
 }
 
 # ============================================
@@ -77,11 +98,15 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 
 log_info "Verificando conexión a $SERVER_IP..."
-if cmd_ssh "echo 'Conexión OK'"; then
-    log_ok "Conexión exitosa"
+if [ "$EXEC_MODE" = "local" ]; then
+    log_ok "Modo local - ejecutando en este servidor"
 else
-    log_error "No se puede conectar al servidor"
-    exit 1
+    if cmd_ssh "echo 'Conexión OK'"; then
+        log_ok "Conexión exitosa"
+    else
+        log_error "No se puede conectar al servidor"
+        exit 1
+    fi
 fi
 
 # ============================================
