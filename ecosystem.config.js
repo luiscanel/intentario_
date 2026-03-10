@@ -22,7 +22,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '500M',
+      max_memory_restart: '400M',
+      node_args: '--max-old-space-size=384',
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
@@ -42,7 +43,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '300M',
+      max_memory_restart: '250M',
+      node_args: '--max-old-space-size=192',
       env: {
         NODE_ENV: 'production'
       },

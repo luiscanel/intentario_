@@ -19,6 +19,9 @@ services:
       - DATABASE_URL=file:./prisma/dev.db
       - CORS_ORIGIN=http://localhost:5174,http://localhost:3001
     working_dir: /app
+    mem_limit: 512m
+    memswap_limit: 768m
+    cpus: 0.5
 
   client:
     build:
@@ -34,3 +37,6 @@ services:
     depends_on:
       - server
     working_dir: /app
+    mem_limit: 256m
+    memswap_limit: 384m
+    cpus: 0.25
