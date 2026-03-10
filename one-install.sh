@@ -166,7 +166,8 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 
 cmd_ssh "cd $PROJECT_DIR/server && npm install bcrypt --save-dev 2>&1 | tail -2"
 
-cmd_ssh "cd $PROJECT_DIR/server && node -e \"
+# Crear script temporal para admin
+cmd_sudo "cat > $PROJECT_DIR/server/create_admin_temp.js << 'EOFADMIN'
 const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -180,7 +181,10 @@ async function main() {
   console.log('Usuario admin creado:', email);
 }
 main().catch(console.error).finally(() => prisma.\$disconnect());
-\""
+EOFADMIN
+chown $SSH_USER:$SSH_USER $PROJECT_DIR/server/create_admin_temp.js"
+
+cmd_ssh "cd $PROJECT_DIR/server && node create_admin_temp.js && rm create_admin_temp.js"
 log_ok "Usuario admin creado: jorge.canel@grupoalmo.com / $ADMIN_PASS"
 
 # ============================================
