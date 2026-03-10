@@ -10,22 +10,21 @@ set -e
 # CONFIGURACIÓN (Editar según necesidad)
 # ============================================
 # Valores por defecto - cambiar para producción
-SERVER_IP="${SERVER_IP:-192.168.0.21}"
+SERVER_IP="${SERVER_IP:-}"
 SSH_USER="${SSH_USER:-inventario}"
 SSH_PASS="${SSH_PASS:-}"
-GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkANk8jOCTLIHR5B6SMOHOPJDjYuuC"
 PROJECT_DIR="/opt/inventario-almo"
 
 # Si no se pasaron credenciales, solicitarlas interactivamente
+if [ -z "$SERVER_IP" ]; then
+    echo -n "Ingrese la IP del servidor: "
+    read SERVER_IP
+fi
+
 if [ -z "$SSH_PASS" ]; then
     echo -n "Ingrese la contraseña SSH: "
     read -s SSH_PASS
-    echo
-fi
-
-if [ -z "$GITHUB_TOKEN" ]; then
-    echo -n "Ingrese el GitHub Token: "
-    read -s GITHUB_TOKEN
     echo
 fi
 
