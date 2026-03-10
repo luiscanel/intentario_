@@ -9,7 +9,7 @@ set -e
 # ============================================
 # CONFIGURACIÓN (Editar según necesidad)
 # ============================================
-SERVER_IP="192.168.0.20"
+SERVER_IP="192.168.0.21"
 SSH_USER="inventario"
 SSH_PASS="123456789"
 GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkANk8jOCTLIHR5B6SMOHOPJDjYuuC"
@@ -206,29 +206,29 @@ log_info "Instalando Nginx..."
 cmd_sudo "apt-get install -y nginx" | tail -3
 
 log_info "Configurando proxy reverso..."
-cmd_sudo "cat > /etc/nginx/sites-available/inventario-almo << 'EOF'
+cmd_sudo 'cat > /etc/nginx/sites-available/inventario-almo << "EOFCONF"
 server {
     listen 80;
-    server_name $SERVER_IP;
+    server_name _;
 
     location / {
-        root $PROJECT_DIR/client/dist;
+        root '$PROJECT_DIR'/client/dist;
         index index.html;
-        try_files \$uri \$uri/ /index.html;
-        add_header X-Frame-Options \"SAMEORIGIN\" always;
-        add_header X-Content-Type-Options \"nosniff\" always;
+        try_files $uri $uri/ /index.html;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
     }
 
     location /api/ {
         proxy_pass http://127.0.0.1:3001/api/;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection \"upgrade\";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
@@ -237,10 +237,11 @@ server {
     access_log /var/log/nginx/inventario_access.log;
     error_log /var/log/nginx/inventario_error.log;
 }
-EOF
-ln -sf /etc/nginx/sites-available/inventario-almo /etc/nginx/sites-enabled/"
+EOFCONF
+rm -f /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/inventario-almo /etc/nginx/sites-enabled/'
 
-cmd_sudo "nginx -t && systemctl restart nginx" | tail -3
+cmd_sudo 'nginx -t && systemctl restart nginx' | tail -3
 log_ok "Nginx configurado"
 
 # ============================================
