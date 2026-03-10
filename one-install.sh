@@ -48,7 +48,7 @@ cmd_ssh() {
 
 cmd_sudo() {
     if [ "$EXEC_MODE" = "local" ]; then
-        echo "$SSH_PASS" | sudo -S bash -c "$1" 2>&1
+        bash -c "$1" 2>&1
     else
         sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP "echo '$SSH_PASS' | sudo -S bash -c '$1'" 2>&1
     fi
@@ -200,7 +200,7 @@ async function main() {
   await prisma.user.create({ data: { email, password: hash, nombre: 'Jorge Canel', rol: 'admin', activo: true, debeCambiarPass: false } });
   console.log('Usuario admin creado:', email);
 }
-main().catch(console.error).finally(() => prisma.\\$disconnect());
+main().catch(console.error).finally(() => prisma.\$disconnect());
 EOFADMIN
 chown \$SSH_USER:\$SSH_USER \$PROJECT_DIR/server/create_admin_temp.js"
 
