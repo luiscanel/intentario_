@@ -85,6 +85,21 @@ else
 fi
 
 # ============================================
+# 0. ACTUALIZAR SISTEMA
+# ============================================
+echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW} 0. ACTUALIZANDO SISTEMA${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+log_info "Actualizando repositorios y paquetes..."
+cmd_sudo "apt-get update && apt-get upgrade -y" | tail -5
+log_ok "Sistema actualizado"
+
+log_info "Instalando prerrequisitos..."
+cmd_sudo "apt-get install -y curl git build-essential sshpass" | tail -3
+log_ok "Prerrequisitos instalados"
+
+# ============================================
 # 1. INSTALAR NODE.JS
 # ============================================
 echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
