@@ -164,15 +164,19 @@ echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━
 echo -e "${YELLOW} 6. CREANDO ADMINISTRADOR${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-cmd_ssh "cd $PROJECT_DIR && ADMIN_PASSWORD='$ADMIN_PASS' node -e \"
+cmd_ssh "cd $PROJECT_DIR/server && npm install bcrypt --save-dev 2>&1 | tail -2"
+
+cmd_ssh "cd $PROJECT_DIR/server && node -e \"
+const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function main() {
   const email = 'jorge.canel@grupoalmo.com';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  const password = '$ADMIN_PASS';
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) { console.log('Usuario ya existe:', email); return; }
-  await prisma.user.create({ data: { email, password, nombre: 'Jorge Canel', rol: 'admin', activo: true, debeCambiarPass: false } });
+  const hash = await bcrypt.hash(password, 10);
+  await prisma.user.create({ data: { email, password: hash, nombre: 'Jorge Canel', rol: 'admin', activo: true, debeCambiarPass: false } });
   console.log('Usuario admin creado:', email);
 }
 main().catch(console.error).finally(() => prisma.\$disconnect());
