@@ -7,39 +7,16 @@
 set -e
 
 # ============================================
-# CONFIGURACIÓN (Editar según necesidad)
+# CONFIGURACIÓN (Solo modo local)
 # ============================================
-# Modo de ejecución: "remote" (desde otra PC) o "local" (dentro del servidor)
-EXEC_MODE="${EXEC_MODE:-remote}"
+EXEC_MODE="local"
 
-# Valores por defecto - cambiar para producción
-SERVER_IP="${SERVER_IP:-}"
-SSH_USER="${SSH_USER:-inventario}"
-SSH_PASS="${SSH_PASS:-}"
-GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkANk8jOCTLIHR5B6SMOHOPJDjYuuC"
+SERVER_IP=$(hostname -I | awk '{print $1}')
+SSH_USER="inventario"
 PROJECT_DIR="/opt/inventario-almo"
-
-# Si no se pasaron credenciales, solicitarlas interactivamente
-if [ "$EXEC_MODE" = "remote" ]; then
-    if [ -z "$SERVER_IP" ]; then
-        echo -n "Ingrese la IP del servidor: "
-        read SERVER_IP
-    fi
-
-    if [ -z "$SSH_PASS" ]; then
-        echo -n "Ingrese la contraseña SSH: "
-        read -s SSH_PASS
-        echo
-    fi
-else
-    # Modo local - detectar IP automáticamente
-    SERVER_IP=$(hostname -I | awk '{print $1}')
-    echo "Modo local detectado. IP: $SERVER_IP"
-fi
-
+GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkANk8jOCTLIHR5B6SMOHOPJDjYuuC"
 PROJECT_REPO="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
 
-# Contraseña admin (por defecto admin123, puede cambiarse con ADMIN_PASS)
 ADMIN_PASS="${ADMIN_PASS:-admin123}"
 export ADMIN_PASS
 
@@ -121,6 +98,12 @@ log_info "Instalando prerrequisitos..."
 cmd_sudo "apt-get install -y curl git build-essential sshpass" | tail -3
 log_ok "Prerrequisitos instalados"
 
+# Crear usuario inventario si no existe
+log_info "Creando usuario 'inventario'..."
+cmd_sudo "id inventario &>/dev/null || useradd -m -s /bin/bash inventario" 2>/dev/null || true
+cmd_sudo "echo 'inventario:inventario' | chpasswd" 2>/dev/null || true
+log_ok "Usuario 'inventario' configurado"
+
 # ============================================
 # 1. INSTALAR NODE.JS
 # ============================================
@@ -165,7 +148,7 @@ echo -e "${YELLOW} 4. CONFIGURANDO ENTORNO${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 log_info "Creando archivo .env..."
-cmd_sudo "cat > $PROJECT_DIR/server/.env << 'EOF'
+cmd_sudo "cat > $PROJECT_DIR/server/.env << EOF
 NODE_ENV=production
 PORT=3001
 HOST=0.0.0.0
@@ -204,22 +187,22 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 cmd_ssh "cd $PROJECT_DIR/server && npm install bcrypt --save-dev 2>&1 | tail -2"
 
 # Crear script temporal para admin
-cmd_sudo "cat > $PROJECT_DIR/server/create_admin_temp.js << 'EOFADMIN'
+cmd_sudo "cat > $PROJECT_DIR/server/create_admin_temp.js << EOFADMIN
 const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function main() {
   const email = 'jorge.canel@grupoalmo.com';
-  const password = '$ADMIN_PASS';
+  const password = '\$ADMIN_PASS';
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) { console.log('Usuario ya existe:', email); return; }
   const hash = await bcrypt.hash(password, 10);
   await prisma.user.create({ data: { email, password: hash, nombre: 'Jorge Canel', rol: 'admin', activo: true, debeCambiarPass: false } });
   console.log('Usuario admin creado:', email);
 }
-main().catch(console.error).finally(() => prisma.\$disconnect());
+main().catch(console.error).finally(() => prisma.\\$disconnect());
 EOFADMIN
-chown $SSH_USER:$SSH_USER $PROJECT_DIR/server/create_admin_temp.js"
+chown \$SSH_USER:\$SSH_USER \$PROJECT_DIR/server/create_admin_temp.js"
 
 cmd_ssh "cd $PROJECT_DIR/server && node create_admin_temp.js && rm create_admin_temp.js"
 log_ok "Usuario admin creado: jorge.canel@grupoalmo.com / $ADMIN_PASS"
