@@ -39,11 +39,8 @@ fi
 
 PROJECT_REPO="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
 
-# Contraseña admin (generar aleatoria si no se especifica)
-ADMIN_PASS="${ADMIN_PASS:-}"
-if [ -z "$ADMIN_PASS" ]; then
-    ADMIN_PASS=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 12)
-fi
+# Contraseña admin (por defecto admin123, puede cambiarse con ADMIN_PASS)
+ADMIN_PASS="${ADMIN_PASS:-admin123}"
 export ADMIN_PASS
 
 # ============================================
@@ -265,15 +262,22 @@ module.exports = {
     out_file: '/var/log/inventario/out.log',
     autorestart: true,
     watch: false,
-    max_memory_restart: '500M'
+    max_memory_restart: '500M',
+    user: '$SSH_USER'
   }]
 }
 EOF"
 
 cmd_sudo "mkdir -p /var/log/inventario && chown -R $SSH_USER:$SSH_USER /var/log/inventario"
 
-log_info "Iniciando servidor..."
-cmd_ssh "cd $PROJECT_DIR && pm2 start ecosystem.config.js && pm2 save" | tail -10
+log_info "Iniciando servidor como usuario $SSH_USER..."
+
+# En modo local, ejecutar PM2 sin sudo como el usuario inventario
+if [ "$EXEC_MODE" = "local" ]; then
+    cmd_ssh "cd $PROJECT_DIR && sudo -u $SSH_USER pm2 start ecosystem.config.js && sudo -u $SSH_USER pm2 save" | tail -10
+else
+    cmd_ssh "cd $PROJECT_DIR && pm2 start ecosystem.config.js && pm2 save" | tail -10
+fi
 log_ok "PM2 iniciado"
 
 # ============================================
