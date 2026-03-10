@@ -202,7 +202,7 @@ async function main() {
 }
 main().catch(console.error).finally(() => prisma.\$disconnect());
 EOFADMIN
-chown \$SSH_USER:\$SSH_USER \$PROJECT_DIR/server/create_admin_temp.js"
+chown $SSH_USER:$SSH_USER $PROJECT_DIR/server/create_admin_temp.js"
 
 cmd_ssh "cd $PROJECT_DIR/server && node create_admin_temp.js && rm create_admin_temp.js"
 log_ok "Usuario admin creado: jorge.canel@grupoalmo.com / $ADMIN_PASS"
