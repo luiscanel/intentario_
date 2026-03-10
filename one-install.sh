@@ -9,12 +9,34 @@ set -e
 # ============================================
 # CONFIGURACIÓN (Editar según necesidad)
 # ============================================
-SERVER_IP="192.168.0.21"
-SSH_USER="inventario"
-SSH_PASS="123456789"
-GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkANk8jOCTLIHR5B6SMOHOPJDjYuuC"
-PROJECT_REPO="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
+# Valores por defecto - cambiar para producción
+SERVER_IP="${SERVER_IP:-192.168.0.21}"
+SSH_USER="${SSH_USER:-inventario}"
+SSH_PASS="${SSH_PASS:-}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 PROJECT_DIR="/opt/inventario-almo"
+
+# Si no se pasaron credenciales, solicitarlas interactivamente
+if [ -z "$SSH_PASS" ]; then
+    echo -n "Ingrese la contraseña SSH: "
+    read -s SSH_PASS
+    echo
+fi
+
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo -n "Ingrese el GitHub Token: "
+    read -s GITHUB_TOKEN
+    echo
+fi
+
+PROJECT_REPO="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
+
+# Contraseña admin (generar aleatoria si no se especifica)
+ADMIN_PASS="${ADMIN_PASS:-}"
+if [ -z "$ADMIN_PASS" ]; then
+    ADMIN_PASS=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 12)
+fi
+export ADMIN_PASS
 
 # ============================================
 # COLORS
@@ -143,8 +165,20 @@ echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━
 echo -e "${YELLOW} 6. CREANDO ADMINISTRADOR${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-cmd_ssh "cd $PROJECT_DIR && node create_admin.js"
-log_ok "Usuario admin creado: jorge.canel@grupoalmo.com / admin123"
+cmd_ssh "cd $PROJECT_DIR && ADMIN_PASSWORD='$ADMIN_PASS' node -e \"
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+async function main() {
+  const email = 'jorge.canel@grupoalmo.com';
+  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) { console.log('Usuario ya existe:', email); return; }
+  await prisma.user.create({ data: { email, password, nombre: 'Jorge Canel', rol: 'admin', activo: true, debeCambiarPass: false } });
+  console.log('Usuario admin creado:', email);
+}
+main().catch(console.error).finally(() => prisma.\$disconnect());
+\""
+log_ok "Usuario admin creado: jorge.canel@grupoalmo.com / $ADMIN_PASS"
 
 # ============================================
 # 7. COMPILAR
@@ -284,7 +318,7 @@ echo "   • API: http://$SERVER_IP/api"
 echo ""
 echo -e "${BLUE}🔐 CREDENCIALES:${NC}"
 echo "   • Email: jorge.canel@grupoalmo.com"
-echo "   • Password: admin123"
+echo "   • Password: $ADMIN_PASS"
 echo ""
 echo -e "${BLUE}🛠️  COMANDOS ÚTILES:${NC}"
 echo "   • Ver logs: pm2 logs inventario-server"
@@ -303,7 +337,7 @@ echo ""
 echo -e "${BLUE}🧪 TEST DE LOGIN:${NC}"
 LOGIN_RESULT=$(curl -s -X POST http://$SERVER_IP/api/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"email":"jorge.canel@grupoalmo.com","password":"admin123"}')
+    -d "{\"email\":\"jorge.canel@grupoalmo.com\",\"password\":\"$ADMIN_PASS\"}")
 
 if echo "$LOGIN_RESULT" | grep -q "token"; then
     log_ok "Login exitoso"
