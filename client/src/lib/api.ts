@@ -1,9 +1,7 @@
-import { useAuthStore } from '@/store/authStore'
 import type { Servidor, Usuario, InventarioFisico, InventarioCloud, SecurityStats, ResourcesStats, EmailConfig, ImportResult, Permiso } from '@/types/api'
 
 // Tipo para respuesta de login
 export interface LoginResponse {
-  token: string
   user: Usuario & { roles: string[]; permisos: Permiso[] }
 }
 
@@ -13,19 +11,11 @@ const API_URL = '/api'
 // Utility Functions
 // ============================================
 
-function getToken(): string | null {
-  // Try localStorage first, then Zustand store
-  return localStorage.getItem('token') || useAuthStore.getState().token || null
-}
-
 function getHeaders(): HeadersInit {
-  const token = getToken()
+  // Ahora usamos cookies automáticamente con credentials: 'include'
+  // No necesitamos el token en el header porque la cookie se envía automáticamente
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-  }
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
   }
   
   return headers
@@ -61,6 +51,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // Importante: enviar cookies con la solicitud
     body: JSON.stringify({ email, password }),
   })
   
@@ -70,8 +61,34 @@ export async function login(email: string, password: string): Promise<LoginRespo
   }
   
   const data = await res.json()
-  localStorage.setItem('token', data.token)
+  // No guardamos el token en localStorage - la cookie se maneja automáticamente
   return data as LoginResponse
+}
+
+// Cerrar sesión
+export async function logout(): Promise<void> {
+  try {
+    await fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+  } catch {
+    // Ignorar errores en logout
+  }
+}
+
+// Obtener usuario actual (verificar sesión)
+export async function getMe(): Promise<LoginResponse['user'] | null> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    credentials: 'include',
+  })
+  
+  if (!res.ok) {
+    return null
+  }
+  
+  const data = await res.json()
+  return data.user || null
 }
 
 // ============================================
@@ -734,10 +751,9 @@ export async function getDocumentos(tipo?: string, entidadId?: number, entidadTi
 }
 
 export async function uploadDocumento(formData: FormData) {
-  const token = localStorage.getItem('token')
-  return handleResponse<{ success: boolean; data: any }>(await fetch(`${API_URL}/documentos`, {
+  return handleResponse<{ success: boolean, data: any }>(await fetch(`${API_URL}/documentos`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include',
     body: formData
   }))
 }

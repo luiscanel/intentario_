@@ -317,7 +317,7 @@ export default function Admin() {
     setConfigAlertasLoading(true)
     try {
       const res = await fetch('/api/alertas/config-alertas', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        credentials: 'include'
       })
       const data = await res.json()
       if (data.success) {
@@ -334,10 +334,8 @@ export default function Admin() {
     try {
       const res = await fetch(`/api/alertas/config-alertas/${config.tipo}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
       })
       const data = await res.json()

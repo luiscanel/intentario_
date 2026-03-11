@@ -7,7 +7,7 @@ import { prisma } from '../prisma/index'
 export interface AuditLogData {
   usuarioId?: number | null
   usuario?: string | null
-  accion: 'login' | 'logout' | 'login_failed' | 'create' | 'update' | 'delete' | 'export' | 'import' | 'change_password' | 'reset_password'
+  accion: 'login' | 'logout' | 'login_failed' | 'create' | 'update' | 'delete' | 'export' | 'import' | 'change_password' | 'reset_password' | 'logout_user'
   entidad: string
   entidadId?: number | null
   datosPrevios?: any

@@ -197,9 +197,33 @@ router.post('/login', validate(loginSchema), async (req, res) => {
       { expiresIn: '15m' }
     )
 
+    // Guardar sesión en la base de datos
+    const ip = req.ip || req.socket.remoteAddress || 'unknown'
+    const userAgent = req.headers['user-agent'] || 'unknown'
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutos
+
+    await prisma.sesion.create({
+      data: {
+        usuarioId: usuario.id,
+        token,
+        ip,
+        userAgent,
+        expiresAt,
+        activa: true
+      }
+    })
+
+    // Enviar token en cookie httpOnly (segura)
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutos en ms
+      path: '/'
+    })
+
     res.json({
       success: true,
-      token,
       user: {
         id: usuario.id,
         email: usuario.email,
@@ -412,6 +436,153 @@ router.post('/reset-password/:userId', authMiddleware, async (req, res) => {
     res.json(response)
   } catch (error) {
     console.error('Reset password error:', error)
+    res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' })
+  }
+})
+
+// Cerrar sesión actual
+router.post('/logout', authMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).user?.id
+    const token = req.cookies?.token || req.headers.authorization?.split(' ')[1]
+
+    if (token) {
+      // Invalidar sesión en la base de datos
+      await prisma.sesion.updateMany({
+        where: {
+          usuarioId: userId,
+          token: token,
+          activa: true
+        },
+        data: { activa: false }
+      })
+    }
+
+    // Limpiar cookie
+    res.clearCookie('token', { path: '/' })
+
+    createAuditLog({
+      usuarioId: userId,
+      usuario: (req as any).user?.email,
+      accion: 'logout',
+      entidad: 'User',
+      entidadId: userId,
+      ...getRequestInfo(req)
+    })
+
+    res.json({ success: true, message: 'Sesión cerrada correctamente' })
+  } catch (error) {
+    console.error('Logout error:', error)
+    res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' })
+  }
+})
+
+// Obtener usuario actual (para verificar sesión)
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).user?.id
+
+    const usuario = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        usuarioRoles: {
+          include: {
+            rol: {
+              include: {
+                permisos: { include: { modulo: true } },
+                roles: { include: { modulo: true } }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!usuario) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado', code: 'NOT_FOUND' })
+    }
+
+    // Extraer permisos únicos
+    const permisosSet = new Set<string>()
+    const permisos: { modulo: string; accion: string }[] = []
+    const modulosSet = new Set<string>()
+    const modulos: string[] = []
+
+    for (const ur of usuario.usuarioRoles) {
+      for (const rm of ur.rol.roles || []) {
+        if (!modulosSet.has(rm.modulo.nombre)) {
+          modulosSet.add(rm.modulo.nombre)
+          modulos.push(rm.modulo.nombre)
+        }
+      }
+      for (const p of ur.rol.permisos || []) {
+        const key = `${p.modulo.nombre}_${p.accion}`
+        if (!permisosSet.has(key)) {
+          permisosSet.add(key)
+          permisos.push({ modulo: p.modulo.nombre, accion: p.accion })
+        }
+      }
+    }
+
+    const roles = usuario.usuarioRoles.map(ur => ur.rol.nombre)
+
+    res.json({
+      success: true,
+      user: {
+        id: usuario.id,
+        email: usuario.email,
+        nombre: usuario.nombre,
+        rol: usuario.rol,
+        roles,
+        modulos,
+        permisos
+      }
+    })
+  } catch (error) {
+    console.error('Get me error:', error)
+    res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' })
+  }
+})
+
+// Cerrar todas las sesiones de un usuario (admin)
+router.post('/logout-user/:userId', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params
+    const adminId = (req as any).user?.id
+    const adminRol = (req as any).user?.rol
+
+    // Verificar que es admin
+    if (adminRol !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Solo administradores', code: 'FORBIDDEN' })
+    }
+
+    // Invalidar todas las sesiones del usuario
+    const result = await prisma.sesion.updateMany({
+      where: {
+        usuarioId: parseInt(userId),
+        activa: true
+      },
+      data: { activa: false }
+    })
+
+    const targetUser = await prisma.user.findUnique({ where: { id: parseInt(userId) } })
+
+    createAuditLog({
+      usuarioId: adminId,
+      usuario: (req as any).user?.email,
+      accion: 'logout_user',
+      entidad: 'User',
+      entidadId: parseInt(userId),
+      datosNuevos: JSON.stringify({ email: targetUser?.email, sesionesCerradas: result.count }),
+      ...getRequestInfo(req)
+    })
+
+    res.json({ 
+      success: true, 
+      message: `Se cerraron ${result.count} sesiones` 
+    })
+  } catch (error) {
+    console.error('Logout user error:', error)
     res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' })
   }
 })

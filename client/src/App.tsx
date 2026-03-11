@@ -3,8 +3,9 @@ import { Toaster } from './components/ui/toaster'
 import { useAuthStore } from './store/authStore'
 import Login from './pages/Login'
 import Layout from './components/layout/Layout'
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { getMe } from './lib/api'
 
 // Lazy loading para todas las páginas
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -37,7 +38,33 @@ function PageLoader() {
 }
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, login } = useAuthStore()
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await getMe()
+        if (user) {
+          login(user)
+        }
+      } catch {
+        // No hay sesión válida
+      } finally {
+        setLoading(false)
+      }
+    }
+    checkAuth()
+  }, [login])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />
 }
 

@@ -33,7 +33,7 @@ export default function Login() {
     setLoading(true)
     try {
       const data = await login(email, password)
-      setAuth(data.user, data.token)
+      setAuth(data.user)
       toast({
         title: 'Bienvenido',
         description: `Sesión iniciada como ${data.user.nombre}`,

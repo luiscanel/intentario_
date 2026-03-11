@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { Search, LayoutDashboard, Server, HardDrive, FileText, Users, LogOut, Menu, Shield, Cpu, Activity, User, Cloud, Key, Building2, FileKey, FileCheck, Bell, History, Clock, ShieldCheck, Wrench } from 'lucide-react'
-import { changePassword } from '@/lib/api'
+import { changePassword, logout as apiLogout } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -79,7 +79,8 @@ export default function Layout() {
   const [changingPassword, setChangingPassword] = useState(false)
   const { toast } = useToast()
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await apiLogout()
     logout()
     navigate('/login')
   }

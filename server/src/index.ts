@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import path from 'path'
 import compression from 'compression'
+import cookieParser from 'cookie-parser'
 import http from 'http'
 import authRoutes from './routes/auth'
 import servidoresRoutes from './routes/servidores'
@@ -77,6 +78,9 @@ app.use(express.json({ limit: '10mb' }))
 
 // Parser para form data
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Parser para cookies
+app.use(cookieParser())
 
 // Sanitización de inputs (SQL injection, XSS)
 app.use(sanitizeInput)

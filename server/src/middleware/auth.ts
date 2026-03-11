@@ -17,10 +17,11 @@ export interface AuthRequest extends Request {
 }
 
 export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization
+  //优先从cookie获取token，其次从header获取（兼容旧版客户端）
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1]
   const ip = req.ip || req.socket.remoteAddress || 'unknown'
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     log.warn('Auth: No token provided', { path: req.path, ip })
     return res.status(401).json({ 
       success: false,
@@ -29,11 +30,27 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
     })
   }
 
-  const token = authHeader.split(' ')[1]
-
   try {
     const decoded = jwt.verify(token, config.JWT_SECRET) as { id: number; email: string; rol: string }
     req.user = decoded
+
+    // 验证数据库中的会话是否有效
+    const sesion = await prisma.sesion.findFirst({
+      where: {
+        token: token,
+        activa: true,
+        expiresAt: { gt: new Date() }
+      }
+    })
+
+    if (!sesion) {
+      log.warn('Auth: Session not found or inactive', { userId: decoded.id, path: req.path, ip })
+      return res.status(401).json({ 
+        success: false,
+        message: 'Sesión inválida o expirada. Por favor, inicie sesión nuevamente.',
+        code: 'SESSION_INVALID'
+      })
+    }
 
     // Verificar timeout por inactividad
     const usuario = await prisma.user.findUnique({
@@ -70,6 +87,11 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
           ip,
           tiempoInactivo: `${Math.round(tiempoInactivo / 60000)} min`
         })
+        // Invalidar sesión por inactividad
+        await prisma.sesion.updateMany({
+          where: { token: token, activa: true },
+          data: { activa: false }
+        })
         return res.status(401).json({ 
           success: false,
           message: 'Sesión expirada por inactividad. Por favor, inicie sesión nuevamente.',
@@ -84,10 +106,21 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
       data: { ultimoAccesoActivo: new Date() }
     }).catch(err => log.error('Error updating ultimoAccesoActivo', { error: err.message }))
 
+    // Actualizar último acceso de la sesión
+    prisma.sesion.update({
+      where: { id: sesion.id },
+      data: { ultimoAcceso: new Date() }
+    }).catch(err => log.error('Error updating sesion ultimoAcceso', { error: err.message }))
+
     next()
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       log.warn('Auth: Token expired', { path: req.path, ip })
+      // Invalidar sesión expirada
+      await prisma.sesion.updateMany({
+        where: { token: token, activa: true },
+        data: { activa: false }
+      }).catch(() => {})
       return res.status(401).json({ 
         success: false,
         message: 'Token expirado',
