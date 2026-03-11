@@ -22,7 +22,9 @@ print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # ============================================
 # VARIABLES - CONFIGURA ESTOS VALORES
 # ============================================
-DOMAIN_OR_IP="192.168.1.100"        # Tu IP o dominio
+# Detectar IP automáticamente
+SERVER_IP=$(hostname -I | awk '{print $1}')
+DOMAIN_OR_IP="${SERVER_IP}"        # Se detectará automáticamente
 ADMIN_EMAIL="jorge.canel@grupoalmo.com"
 ADMIN_PASSWORD="admin123"
 MYSQL_ROOT_PASSWORD=""  # Dejar vacío si no necesitas MySQL externo
@@ -132,14 +134,14 @@ echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
 
-# Crear archivo .env
+# Crear archivo .env con ruta ABSOLUTA a la base de datos
 cat > .env << EOF
 NODE_ENV=production
 PORT=3001
 HOST=0.0.0.0
 JWT_SECRET=$(openssl rand -base64 32)
 JWT_EXPIRES_IN=24h
-DATABASE_URL=file:./prisma/dev.db
+DATABASE_URL=file:/opt/inventario-almo/server/prisma/dev.db
 CORS_ORIGIN=https://$DOMAIN_OR_IP
 RATE_LIMIT_WINDOW_MS=15 minutes
 RATE_LIMIT_MAX_REQUESTS=100
@@ -170,6 +172,9 @@ echo "PASO 9: Creando usuario administrador"
 echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
+# Instalar bcryptjs si no está
+sudo -u inventario npm install bcryptjs --save
+# Crear usuario admin
 sudo -u inventario node create_admin.js
 print_success "Usuario admin creado"
 
