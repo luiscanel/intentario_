@@ -89,11 +89,12 @@ const rolesBase = [
 ]
 
 async function inicializarSistema() {
-  console.log('🔄 Inicializando módulos, roles y permisos...\n')
+  console.log('🔄 Sincronizando módulos, roles y permisos...\n')
+  console.log('⚠️  NOTA: Los datos existentes NO se borran\n')
 
   try {
-    // 1. Crear módulos
-    console.log('📦 Creando módulos...')
+    // 1. Crear módulos (solo si no existen)
+    console.log('📦 Sincronizando módulos...')
     for (const mod of modulosBase) {
       const existente = await prisma.modulo.findUnique({ where: { nombre: mod.nombre } })
       if (!existente) {
@@ -116,8 +117,8 @@ async function inicializarSistema() {
       }
     }
 
-    // 2. Crear roles
-    console.log('\n👥 Creando roles...')
+    // 2. Sincronizar roles base (solo si no existen)
+    console.log('\n👥 Sincronizando roles base...')
     for (const rol of rolesBase) {
       const existente = await prisma.rol.findUnique({ where: { nombre: rol.nombre } })
       if (!existente) {
@@ -152,6 +153,53 @@ async function inicializarSistema() {
         console.log(`  ✅ Rol creado: ${rol.nombre}`)
       } else {
         console.log(`  ⏭️  Rol ya existe: ${rol.nombre}`)
+        
+        // Obtener módulos del sistema para sincronización
+        const modulosSistema = await prisma.modulo.findMany({
+          where: { nombre: { in: rol.modulos } }
+        })
+        
+        // Sincronizar módulos del rol (agregar los que faltan)
+        const modulosActuales = await prisma.rolModulo.findMany({
+          where: { rolId: existente.id },
+          include: { modulo: true }
+        })
+        const modulosActualesNombres = modulosActuales.map(m => m.modulo.nombre)
+        
+        const modulosFaltantes = modulosSistema.filter(m => !modulosActualesNombres.includes(m.nombre))
+        
+        if (modulosFaltantes.length > 0) {
+          for (const mod of modulosFaltantes) {
+            await prisma.rolModulo.create({
+              data: { rolId: existente.id, moduloId: mod.id }
+            })
+          }
+          console.log(`  ➕ Módulos agregados a ${rol.nombre}: ${modulosFaltantes.map(m => m.nombre).join(', ')}`)
+        }
+        
+        // Sincronizar permisos del rol (agregar los que faltan)
+        const permisosActuales = await prisma.permiso.findMany({
+          where: { rolId: existente.id }
+        })
+        const permisosKey = permisosActuales.map(p => `${p.moduloId}-${p.accion}`)
+        
+        const permisosFaltantes = rol.permisos.filter(p => {
+          const modulo = modulosSistema.find(m => m.nombre === p.modulo)
+          if (!modulo) return false
+          return !permisosKey.includes(`${modulo.id}-${p.accion}`)
+        })
+        
+        if (permisosFaltantes.length > 0) {
+          for (const p of permisosFaltantes) {
+            const modulo = modulosSistema.find(m => m.nombre === p.modulo)
+            if (modulo) {
+              await prisma.permiso.create({
+                data: { rolId: existente.id, moduloId: modulo.id, accion: p.accion }
+              })
+            }
+          }
+          console.log(`  ➕ Permisos agregados a ${rol.nombre}: ${permisosFaltantes.length} nuevos`)
+        }
       }
     }
 
