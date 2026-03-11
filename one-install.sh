@@ -7,16 +7,19 @@
 set -e
 
 # ============================================
-# CONFIGURACIÓN (Solo modo local)
+# CONFIGURACIÓN
 # ============================================
-EXEC_MODE="local"
+EXEC_MODE="${EXEC_MODE:-local}"
 
-SERVER_IP=$(hostname -I | awk '{print $1}')
-SSH_USER="inventario"
+SERVER_IP="${SERVER_IP:-$(hostname -I | awk '{print $1}')}"
+SSH_USER="${SSH_USER:-inventario}"
+SSH_PASS="${SSH_PASS:-inventario}"
 PROJECT_DIR="/opt/inventario-almo"
 GITHUB_TOKEN="github_pat_11BQIYCZQ0DhCZKWFYl898_LtBJdAKIElaGJgQDa973iqyboSXVEkANk8jOCTLIHR5B6SMOHOPJDjYuuC"
 PROJECT_REPO="https://${GITHUB_TOKEN}@github.com/luiscanel/intentario_.git"
 
+SSH_USER="${SSH_USER:-inventario}"
+SSH_PASS="${SSH_PASS:-inventario}"
 ADMIN_PASS="${ADMIN_PASS:-admin123}"
 export ADMIN_PASS
 
