@@ -14,7 +14,7 @@ const secciones = [
   {
     titulo: 'General',
     items: [
-      { to: '/', icon: LayoutDashboard, label: 'Dashboard', permiso: null },
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard', permiso: { modulo: 'dashboard', accion: 'ver' } },
     ]
   },
   {
@@ -28,47 +28,46 @@ const secciones = [
   {
     titulo: 'Monitoreo',
     items: [
-      { to: '/monitor', icon: Activity, label: 'Disponibilidad', permiso: null },
-      // Servicios ahora está integrado en Monitoreo
+      { to: '/monitor', icon: Activity, label: 'Disponibilidad', permiso: { modulo: 'monitor', accion: 'ver' } },
     ]
   },
   {
     titulo: 'Administración',
     items: [
-      { to: '/proveedores', icon: Building2, label: 'Proveedores', permiso: null },
-      { to: '/licencias', icon: FileKey, label: 'Licencias', permiso: null },
-      { to: '/contratos', icon: FileCheck, label: 'Contratos', permiso: null },
+      { to: '/proveedores', icon: Building2, label: 'Proveedores', permiso: { modulo: 'proveedores', accion: 'ver' } },
+      { to: '/licencias', icon: FileKey, label: 'Licencias', permiso: { modulo: 'licencias', accion: 'ver' } },
+      { to: '/contratos', icon: FileCheck, label: 'Contratos', permiso: { modulo: 'contratos', accion: 'ver' } },
     ]
   },
   {
     titulo: 'Seguridad',
     items: [
-      { to: '/seguridad', icon: Shield, label: 'General', permiso: null },
-      { to: '/certificados', icon: ShieldCheck, label: 'Certificados SSL', permiso: null },
+      { to: '/seguridad', icon: Shield, label: 'General', permiso: { modulo: 'seguridad', accion: 'ver' } },
+      { to: '/certificados', icon: ShieldCheck, label: 'Certificados SSL', permiso: { modulo: 'certificados', accion: 'ver' } },
     ]
   },
   {
     titulo: 'Operaciones',
     items: [
-      { to: '/cambios', icon: Wrench, label: 'Gestión de Cambios', permiso: null },
-      { to: '/backups', icon: Clock, label: 'Backups', permiso: null },
+      { to: '/cambios', icon: Wrench, label: 'Gestión de Cambios', permiso: { modulo: 'cambios', accion: 'ver' } },
+      { to: '/backups', icon: Clock, label: 'Backups', permiso: { modulo: 'backups', accion: 'ver' } },
     ]
   },
   {
     titulo: 'Sistema',
     items: [
-      { to: '/alertas', icon: Bell, label: 'Alertas', permiso: null },
-      { to: '/recursos', icon: Cpu, label: 'Recursos', permiso: null },
-      { to: '/responsables', icon: User, label: 'Responsables', permiso: null },
+      { to: '/alertas', icon: Bell, label: 'Alertas', permiso: { modulo: 'alertas', accion: 'ver' } },
+      { to: '/recursos', icon: Cpu, label: 'Recursos', permiso: { modulo: 'recursos', accion: 'ver' } },
+      { to: '/responsables', icon: User, label: 'Responsables', permiso: { modulo: 'responsables', accion: 'ver' } },
       { to: '/reports', icon: FileText, label: 'Informes', permiso: { modulo: 'informes', accion: 'ver' } },
       { to: '/admin', icon: Users, label: 'Admin', permiso: { modulo: 'admin', accion: 'ver' } },
-      { to: '/audit-log', icon: History, label: 'Audit Log', permiso: { modulo: 'admin', accion: 'ver' } },
+      { to: '/audit-log', icon: History, label: 'Audit Log', permiso: { modulo: 'audit_log', accion: 'ver' } },
     ]
   }
 ]
 
 export default function Layout() {
-  const { user, logout } = useAuthStore()
+  const { user, logout, tienePermiso } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -155,24 +154,31 @@ export default function Layout() {
                 {seccion.titulo}
               </h3>
               <div className="space-y-1">
-                {seccion.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setSidebarOpen(false)}
-                    className={({ isActive }) =>
-                      `group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
-                        isActive 
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25' 
-                          : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
-                      }`
-                    }
-                    end={item.to === '/'}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </NavLink>
-                ))}
+                {seccion.items
+                  .filter(item => {
+                    // Si permiso es null, permitir acceso (es público)
+                    if (!item.permiso) return true
+                    // Verificar permiso específico
+                    return tienePermiso(item.permiso.modulo, item.permiso.accion)
+                  })
+                  .map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        `group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
+                          isActive 
+                            ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25' 
+                            : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
+                        }`
+                      }
+                      end={item.to === '/'}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </NavLink>
+                  ))}
               </div>
             </div>
           ))}
