@@ -160,6 +160,7 @@ echo "PASO 8: Generando base de datos"
 echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
+sudo -u inventario npm install
 sudo -u inventario npx prisma generate
 sudo -u inventario npx prisma db push
 print_success "Base de datos creada"
@@ -172,9 +173,6 @@ echo "PASO 9: Creando usuario administrador"
 echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
-# Instalar bcryptjs si no está
-sudo -u inventario npm install bcryptjs --save
-# Crear usuario admin
 sudo -u inventario node create_admin.js
 print_success "Usuario admin creado"
 
