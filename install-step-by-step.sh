@@ -212,15 +212,8 @@ sudo -u inventario npx prisma generate
 DB_PATH="/opt/inventario-almo/server/prisma/prisma/dev.db"
 if [ -f "$DB_PATH" ]; then
   print_warning "La base de datos ya existe en $DB_PATH"
-  read -p "¿Deseas recrearla? Esto borrará todos los datos existentes (s/n): " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Ss]$ ]]; then
-    rm -f "$DB_PATH"
-    sudo -u inventario npx prisma db push
-    print_success "Base de datos recreada"
-  else
-    print_status "Usando base de datos existente"
-  fi
+  print_status "El script de instalación sincronizará los datos sin borrarlos"
+  print_status "Tus usuarios y configuraciones se mantendrán"
 else
   sudo -u inventario npx prisma db push
   print_success "Base de datos creada"
@@ -243,10 +236,11 @@ export ADMIN_PASSWORD="$ADMIN_PASSWORD"
 sudo -u inventario ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node create_admin.js
 print_success "Usuario admin creado"
 
-# Inicializar módulos, roles y permisos del sistema
-print_status "Inicializando módulos y roles del sistema..."
+# Sincronizar módulos, roles y permisos del sistema
+print_status "Sincronizando módulos y roles del sistema..."
+print_warning "⚠️ Los datos existentes NO se borrarán"
 sudo -u inventario npx tsx scripts/inicializar_sistema.ts
-print_success "Sistema inicializado"
+print_success "Sistema sincronizado"
 
 # ============================================
 # PASO 10: COMPILAR FRONTEND

@@ -1,14 +1,16 @@
 #!/bin/bash
 # ============================================
-# Script para inicializar módulos y roles
+# Script para sincronizar módulos y roles
 # Ejecutar en el servidor de producción
+# NOTA: Este script NO borra datos existentes
 # ============================================
 
-echo "Inicializando módulos, roles y permisos del sistema..."
+echo "Sincronizando módulos, roles y permisos del sistema..."
+echo "⚠️  Los datos existentes NO se borran"
 
 cd /opt/inventario-almo/server
 
 # Ejecutar como usuario inventario
 sudo -u inventario npx tsx scripts/inicializar_sistema.ts
 
-echo "✅ Sistema inicializado correctamente"
+echo "✅ Sistema sincronizado correctamente"

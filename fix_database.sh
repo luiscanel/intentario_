@@ -121,9 +121,10 @@ export DATABASE_URL="file:$PRISMA_DIR/dev.db"
 
 echo "DATABASE_URL: $DATABASE_URL"
 
-npx prisma db push --force-reset
+# Solo sincronizar esquema sin borrar datos
+npx prisma db push
 
-echo -e "${GREEN}✓ Base de datos creada/migrada${NC}"
+echo -e "${GREEN}✓ Base de datos sincronizada (sin borrar datos)${NC}"
 
 # ============================================
 # Paso 6: Verificar que la base de datos existe
