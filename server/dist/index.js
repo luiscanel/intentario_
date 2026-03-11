@@ -62,10 +62,12 @@ const cambios_1 = __importDefault(require("./routes/nuevos/cambios"));
 const backups_1 = __importDefault(require("./routes/nuevos/backups"));
 const costos_1 = __importDefault(require("./routes/nuevos/costos"));
 const monitor_2 = __importDefault(require("./routes/nuevos/monitor"));
+const configAlertas_1 = __importDefault(require("./routes/configAlertas"));
 // Importar configuración y seguridad
 const index_js_1 = require("./config/index.js");
 const logger_js_1 = require("./utils/logger.js");
 const security_js_1 = require("./middleware/security.js");
+const apiResponse_js_1 = require("./utils/apiResponse.js");
 // Importar servicio de notificaciones
 const notificacionesService_js_1 = require("./services/notificacionesService.js");
 // Cargar variables de entorno
@@ -90,6 +92,8 @@ app.use((0, cors_1.default)(security_js_1.corsOptions));
 app.use(express_1.default.json({ limit: '10mb' }));
 // Parser para form data
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+// Sanitización de inputs (SQL injection, XSS)
+app.use(apiResponse_js_1.sanitizeInput);
 // Compresión gzip para respuestas
 app.use((0, compression_1.default)({
     threshold: 1024,
@@ -147,6 +151,7 @@ app.use('/api/monitor', monitor_1.default);
 app.use('/api/documentos', documentos_1.default);
 // Nuevos módulos
 app.use('/api/certificados', certificados_1.default);
+app.use('/api/alertas', configAlertas_1.default);
 app.use('/api/cambios', cambios_1.default);
 app.use('/api/backups-programados', backups_1.default);
 app.use('/api/costos', costos_1.default);

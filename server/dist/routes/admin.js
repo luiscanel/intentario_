@@ -152,6 +152,7 @@ router.get('/roles', async (req, res) => {
         const roles = await index_1.prisma.rol.findMany({
             include: {
                 roles: { include: { modulo: true } },
+                permisos: { include: { modulo: true } },
                 usuarios: true
             },
             orderBy: { nombre: 'asc' }
@@ -161,7 +162,8 @@ router.get('/roles', async (req, res) => {
             data: roles.map(r => ({
                 ...r,
                 usuariosCount: r.usuarios.length,
-                modulos: r.roles.map(rm => rm.modulo)
+                modulos: r.roles.map(rm => rm.modulo),
+                permisos: r.permisos.map(p => ({ moduloId: p.moduloId, modulo: p.modulo, accion: p.accion }))
             }))
         });
     }
@@ -191,10 +193,26 @@ router.get('/permisos', async (req, res) => {
 // Create rol
 router.post('/roles', async (req, res) => {
     try {
-        const { nombre, descripcion, moduloIds } = req.body;
+        const { nombre, descripcion, moduloIds, permisos } = req.body;
         const existing = await index_1.prisma.rol.findUnique({ where: { nombre } });
         if (existing) {
             return res.status(400).json({ success: false, message: 'Ya existe un rol con ese nombre', code: 'DUPLICATE_ROLE' });
+        }
+        // Si no se proporcionan permisos explícitos, crear permisos por defecto para cada módulo
+        let permisosData = [];
+        if (permisos && permisos.length > 0) {
+            // permisos es array de { moduloId, accion }
+            permisosData = permisos;
+        }
+        else if (moduloIds && moduloIds.length > 0) {
+            // Por defecto, dar todos los permisos (ver, crear, editar, eliminar, exportar) a cada módulo
+            const acciones = ['ver', 'crear', 'editar', 'eliminar', 'exportar'];
+            permisosData = [];
+            for (const moduloId of moduloIds) {
+                for (const accion of acciones) {
+                    permisosData.push({ moduloId, accion });
+                }
+            }
         }
         const rol = await index_1.prisma.rol.create({
             data: {
@@ -203,9 +221,15 @@ router.post('/roles', async (req, res) => {
                 esBase: false,
                 roles: moduloIds?.length ? {
                     create: moduloIds.map((moduloId) => ({ moduloId }))
+                } : undefined,
+                permisos: permisosData.length > 0 ? {
+                    create: permisosData
                 } : undefined
             },
-            include: { roles: { include: { modulo: true } } }
+            include: {
+                roles: { include: { modulo: true } },
+                permisos: { include: { modulo: true } }
+            }
         });
         res.status(201).json({ success: true, data: rol });
     }
@@ -218,13 +242,26 @@ router.post('/roles', async (req, res) => {
 router.put('/roles/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, descripcion, moduloIds } = req.body;
+        const { nombre, descripcion, moduloIds, permisos } = req.body;
         // Actualizar módulos del rol
         if (moduloIds !== undefined) {
             await index_1.prisma.rolModulo.deleteMany({ where: { rolId: parseInt(id) } });
             if (moduloIds.length > 0) {
                 await index_1.prisma.rolModulo.createMany({
                     data: moduloIds.map((moduloId) => ({ rolId: parseInt(id), moduloId }))
+                });
+            }
+        }
+        // Actualizar permisos del rol
+        if (permisos !== undefined) {
+            await index_1.prisma.permiso.deleteMany({ where: { rolId: parseInt(id) } });
+            if (permisos.length > 0) {
+                await index_1.prisma.permiso.createMany({
+                    data: permisos.map((p) => ({
+                        rolId: parseInt(id),
+                        moduloId: p.moduloId,
+                        accion: p.accion
+                    }))
                 });
             }
         }
@@ -236,7 +273,10 @@ router.put('/roles/:id', async (req, res) => {
         const rol = await index_1.prisma.rol.update({
             where: { id: parseInt(id) },
             data: updateData,
-            include: { roles: { include: { modulo: true } } }
+            include: {
+                roles: { include: { modulo: true } },
+                permisos: { include: { modulo: true } }
+            }
         });
         res.json({ success: true, data: rol });
     }

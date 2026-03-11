@@ -16,7 +16,7 @@ const envSchema = zod_1.z.object({
     CORS_ORIGIN: zod_1.z.string().default('http://localhost:5174'),
     // Rate Limiting
     RATE_LIMIT_WINDOW_MS: zod_1.z.string().default('15 minutes'),
-    RATE_LIMIT_MAX_REQUESTS: zod_1.z.string().default('100'),
+    RATE_LIMIT_MAX_REQUESTS: zod_1.z.string().default('1000'),
     // Rate Limiting Auth (más estricto)
     AUTH_RATE_LIMIT_MAX: zod_1.z.string().default('5'),
     // Email (opcional)

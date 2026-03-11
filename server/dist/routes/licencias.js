@@ -9,11 +9,31 @@ router.use(auth_1.authMiddleware);
 // Obtener todas las licencias
 router.get('/', async (req, res) => {
     try {
-        const licencias = await index_1.prisma.licencia.findMany({
-            orderBy: { nombre: 'asc' },
-            include: { proveedor: true, servidor: true }
-        });
-        res.json({ success: true, data: licencias });
+        // Usar raw query para evitar error de Prisma con include
+        const licencias = await index_1.prisma.$queryRaw `
+      SELECT l.*, p.nombre as proveedorNombre, p.email as proveedorEmail, p.telefono as proveedorTelefono,
+             s.host as servidorHost, s.ip as servidorIp
+      FROM Licencia l
+      LEFT JOIN Proveedor p ON l.proveedorId = p.id
+      LEFT JOIN Servidor s ON l.servidorId = s.id
+      ORDER BY l.nombre ASC
+    `;
+        // Transformar resultado
+        const data = licencias.map((l) => ({
+            ...l,
+            proveedor: l.proveedorId ? {
+                id: l.proveedorId,
+                nombre: l.proveedorNombre,
+                email: l.proveedorEmail,
+                telefono: l.proveedorTelefono
+            } : null,
+            servidor: l.servidorId ? {
+                id: l.servidorId,
+                host: l.servidorHost,
+                ip: l.servidorIp
+            } : null
+        }));
+        res.json({ success: true, data });
     }
     catch (error) {
         console.error('Error:', error);
