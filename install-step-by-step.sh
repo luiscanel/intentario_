@@ -176,6 +176,11 @@ cd /opt/inventario-almo/server
 sudo -u inventario node create_admin.js
 print_success "Usuario admin creado"
 
+# Inicializar módulos, roles y permisos del sistema
+print_status "Inicializando módulos y roles del sistema..."
+sudo -u inventario npx tsx scripts/inicializar_sistema.ts
+print_success "Sistema inicializado"
+
 # ============================================
 # PASO 10: COMPILAR FRONTEND
 # ============================================
