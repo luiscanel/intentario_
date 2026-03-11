@@ -157,17 +157,20 @@ async function inicializarSistema() {
 
     // 3. Crear usuario admin si no existe
     console.log('\n👤 Verificando usuario admin...')
+    const adminEmail = process.env.ADMIN_EMAIL || 'jorge.canel@grupoalmo.com'
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
+    
     const adminExistente = await prisma.user.findUnique({ 
-      where: { email: 'admin@inventario.local' } 
+      where: { email: adminEmail } 
     })
     
     if (!adminExistente) {
-      const hashedPassword = await bcrypt.hash('admin123', 10)
+      const hashedPassword = await bcrypt.hash(adminPassword, 10)
       const rolAdmin = await prisma.rol.findUnique({ where: { nombre: 'admin' } })
       
       await prisma.user.create({
         data: {
-          email: 'admin@inventario.local',
+          email: adminEmail,
           password: hashedPassword,
           nombre: 'Administrador',
           rol: 'admin',
@@ -180,7 +183,7 @@ async function inicializarSistema() {
           }
         }
       })
-      console.log('  ✅ Usuario admin creado: admin@inventario.local / admin123')
+      console.log(`  ✅ Usuario admin creado: ${adminEmail} / ${adminPassword}`)
     } else {
       console.log('  ⏭️  Usuario admin ya existe')
     }

@@ -17,14 +17,14 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
 if (process.env.NODE_ENV === 'production') {
   prisma.$connect().then(async () => {
     try {
-      // Limitar cache de SQLite (en KB)
-      await prisma.$executeRawUnsafe('PRAGMA cache_size = -2000') // 2MB cache
+      // Limitar cache de SQLite (en KB) - usar $queryRaw para evitar error de resultados
+      await prisma.$queryRaw`PRAGMA cache_size = -2000` // 2MB cache
       // Modo WAL para mejor rendimiento
-      await prisma.$executeRawUnsafe('PRAGMA journal_mode = WAL')
+      await prisma.$queryRaw`PRAGMA journal_mode = WAL`
       // Sincronización menos frecuente
-      await prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL')
+      await prisma.$queryRaw`PRAGMA synchronous = NORMAL`
       // Temp store en memoria
-      await prisma.$executeRawUnsafe('PRAGMA temp_store = MEMORY')
+      await prisma.$queryRaw`PRAGMA temp_store = MEMORY`
       console.log('✅ SQLite optimizado para producción')
     } catch (e) {
       // Ignorar errores de PRAGMA en desarrollo

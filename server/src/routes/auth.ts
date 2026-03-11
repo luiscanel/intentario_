@@ -7,6 +7,7 @@ import { validate, loginSchema } from '../validations/index.js'
 import { createAuditLog, getRequestInfo } from '../services/auditLogService.js'
 import { sendEmail } from '../services/email.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { log } from '../utils/logger.js'
 
 const router = Router()
 
@@ -42,8 +43,15 @@ function generateTempPassword(): string {
     password += allChars[array[0] % allChars.length]
   }
   
-  // Mezclar la contraseña
-  return password.split('').sort(() => Math.random() - 0.5).join('')
+  // Mezclar la contraseña de forma criptográficamente segura
+  const array = new Uint32Array(password.length)
+  crypto.getRandomValues(array)
+  const mixed = password.split('').map((char, i) => ({ char, rand: array[i] }))
+    .sort((a, b) => a.rand - b.rand)
+    .map(item => item.char)
+    .join('')
+  
+  return mixed
 }
 
 router.post('/login', validate(loginSchema), async (req, res) => {
@@ -352,6 +360,8 @@ router.post('/reset-password/:userId', authMiddleware, async (req, res) => {
 
     // Enviar email con contraseña temporal
     const adminUser = await prisma.user.findUnique({ where: { id: adminId } })
+    let emailEnviado = false
+    let emailErrorMsg = null
     
     try {
       await sendEmail(
@@ -368,9 +378,13 @@ router.post('/reset-password/:userId', authMiddleware, async (req, res) => {
             <p>Saludos,<br>Equipo de Inventario Almo</p>
           </div>`
       )
+      emailEnviado = true
     } catch (emailError) {
-      console.error('Email error:', emailError)
-      // No fallamos si el email falla, pero devolvemos warning
+      emailErrorMsg = emailError instanceof Error ? emailError.message : 'Error desconocido'
+      log.error('Error al enviar email de restablecimiento', { 
+        usuario: usuario.email, 
+        error: emailErrorMsg 
+      })
     }
 
     createAuditLog({
@@ -383,11 +397,19 @@ router.post('/reset-password/:userId', authMiddleware, async (req, res) => {
       ...getRequestInfo(req)
     })
 
-    res.json({ 
+    // Construir respuesta
+    const response: any = { 
       success: true, 
-      message: `Contraseña reseteada. Se envió al correo ${usuario.email}`,
-      warning: 'Si el email no llega, verifica la configuración de correo'
-    })
+      message: `Contraseña reseteada${emailEnviado ? `. Se envió al correo ${usuario.email}` : ''}`
+    }
+    
+    // Agregar warning si el email falló
+    if (!emailEnviado) {
+      response.warning = `No se pudo enviar el email. La contraseña temporal es: ${tempPassword}`
+      response.emailError = emailErrorMsg
+    }
+    
+    res.json(response)
   } catch (error) {
     console.error('Reset password error:', error)
     res.status(500).json({ success: false, message: 'Error del servidor', code: 'SERVER_ERROR' })

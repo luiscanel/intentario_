@@ -12,6 +12,7 @@ const index_js_2 = require("../validations/index.js");
 const auditLogService_js_1 = require("../services/auditLogService.js");
 const email_js_1 = require("../services/email.js");
 const auth_js_1 = require("../middleware/auth.js");
+const logger_js_1 = require("../utils/logger.js");
 const router = (0, express_1.Router)();
 // El middleware de autenticación NO se aplica aquí porque /login debe ser público
 // Las demás rutas que requieren auth se protegen individualmente
@@ -40,8 +41,14 @@ function generateTempPassword() {
         crypto.getRandomValues(array);
         password += allChars[array[0] % allChars.length];
     }
-    // Mezclar la contraseña
-    return password.split('').sort(() => Math.random() - 0.5).join('');
+    // Mezclar la contraseña de forma criptográficamente segura
+    const array = new Uint32Array(password.length);
+    crypto.getRandomValues(array);
+    const mixed = password.split('').map((char, i) => ({ char, rand: array[i] }))
+        .sort((a, b) => a.rand - b.rand)
+        .map(item => item.char)
+        .join('');
+    return mixed;
 }
 router.post('/login', (0, index_js_2.validate)(index_js_2.loginSchema), async (req, res) => {
     try {
@@ -304,6 +311,8 @@ router.post('/reset-password/:userId', auth_js_1.authMiddleware, async (req, res
         });
         // Enviar email con contraseña temporal
         const adminUser = await index_1.prisma.user.findUnique({ where: { id: adminId } });
+        let emailEnviado = false;
+        let emailErrorMsg = null;
         try {
             await (0, email_js_1.sendEmail)(usuario.email, 'Restablecimiento de contraseña - Inventario Almo', `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Hola ${usuario.nombre},</h2>
@@ -315,10 +324,14 @@ router.post('/reset-password/:userId', auth_js_1.authMiddleware, async (req, res
             <p><strong>Importante:</strong> Esta contraseña es temporal y debes cambiarla en tu primer inicio de sesión.</p>
             <p>Saludos,<br>Equipo de Inventario Almo</p>
           </div>`);
+            emailEnviado = true;
         }
         catch (emailError) {
-            console.error('Email error:', emailError);
-            // No fallamos si el email falla, pero devolvemos warning
+            emailErrorMsg = emailError instanceof Error ? emailError.message : 'Error desconocido';
+            logger_js_1.log.error('Error al enviar email de restablecimiento', {
+                usuario: usuario.email,
+                error: emailErrorMsg
+            });
         }
         (0, auditLogService_js_1.createAuditLog)({
             usuarioId: adminId,
@@ -329,11 +342,17 @@ router.post('/reset-password/:userId', auth_js_1.authMiddleware, async (req, res
             datosNuevos: JSON.stringify({ email: usuario.email }),
             ...(0, auditLogService_js_1.getRequestInfo)(req)
         });
-        res.json({
+        // Construir respuesta
+        const response = {
             success: true,
-            message: `Contraseña reseteada. Se envió al correo ${usuario.email}`,
-            warning: 'Si el email no llega, verifica la configuración de correo'
-        });
+            message: `Contraseña reseteada${emailEnviado ? `. Se envió al correo ${usuario.email}` : ''}`
+        };
+        // Agregar warning si el email falló
+        if (!emailEnviado) {
+            response.warning = `No se pudo enviar el email. La contraseña temporal es: ${tempPassword}`;
+            response.emailError = emailErrorMsg;
+        }
+        res.json(response);
     }
     catch (error) {
         console.error('Reset password error:', error);

@@ -4,6 +4,7 @@ const express_1 = require("express");
 const index_1 = require("../prisma/index");
 const auth_1 = require("../middleware/auth");
 const index_js_1 = require("../validations/index.js");
+const logger_js_1 = require("../utils/logger.js");
 const router = (0, express_1.Router)();
 router.use(auth_1.authMiddleware);
 // Obtener todos los items
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
         res.json({ success: true, data: items });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al obtener inventario cloud', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al obtener inventario cloud',
@@ -32,7 +33,7 @@ router.post('/', (0, index_js_1.validate)(index_js_1.inventarioCloudSchema), asy
         res.status(201).json({ success: true, data: item });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al crear item cloud', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al crear item',
@@ -51,7 +52,7 @@ router.put('/:id', (0, index_js_1.validate)(index_js_1.inventarioCloudUpdateSche
         res.json({ success: true, data: item });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al actualizar item cloud', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al actualizar item',
@@ -69,7 +70,7 @@ router.delete('/:id', async (req, res) => {
         res.json({ success: true, message: 'Item eliminado' });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al eliminar item cloud', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al eliminar item',
@@ -88,7 +89,7 @@ router.post('/bulk-delete', (0, index_js_1.validate)(index_js_1.bulkDeleteSchema
         res.json({ success: true, message: `${numericIds.length} instancias eliminadas` });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en eliminación masiva cloud', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error en eliminación masiva',
@@ -100,10 +101,7 @@ router.post('/bulk-delete', (0, index_js_1.validate)(index_js_1.bulkDeleteSchema
 router.post('/import', (0, index_js_1.validate)(index_js_1.inventarioCloudImportSchema), async (req, res) => {
     try {
         const { items } = req.body;
-        console.log('=== IMPORT CLOUD ===');
-        console.log('Total items received:', items?.length);
-        console.log('Sample item:', JSON.stringify(items?.[0]));
-        console.log('=====================');
+        logger_js_1.log.info('Importando inventario cloud', { count: items?.length });
         const str = (v) => {
             if (v === null || v === undefined)
                 return '';
@@ -150,7 +148,7 @@ router.post('/import', (0, index_js_1.validate)(index_js_1.inventarioCloudImport
                 created++;
             }
             catch (e) {
-                console.error('Error creating item:', e.message);
+                logger_js_1.log.warn('Error creando item cloud', { error: e.message });
                 skipped++;
             }
         }
@@ -162,7 +160,7 @@ router.post('/import', (0, index_js_1.validate)(index_js_1.inventarioCloudImport
         });
     }
     catch (error) {
-        console.error('Error importing:', error);
+        logger_js_1.log.error('Error al importar inventario cloud', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: `Error al importar: ${error.message}`,

@@ -41,7 +41,39 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const index_1 = require("../prisma/index");
 const auth_1 = require("../middleware/auth");
 const logger_js_1 = require("../utils/logger.js");
+const index_js_1 = require("../config/index.js");
 const router = (0, express_1.Router)();
+// Generar contraseña temporal segura
+function generateTempPassword() {
+    const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lowercase = 'abcdefghjkmnpqrstuvwxyz';
+    const numbers = '23456789';
+    const special = '!@#$%';
+    const getRandomChar = (chars) => {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return chars[array[0] % chars.length];
+    };
+    let password = '';
+    password += getRandomChar(uppercase);
+    password += getRandomChar(lowercase);
+    password += getRandomChar(numbers);
+    password += getRandomChar(special);
+    const allChars = uppercase + lowercase + numbers + special;
+    for (let i = 4; i < 12; i++) {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        password += allChars[array[0] % allChars.length];
+    }
+    // Mezclar de forma criptográficamente segura
+    const array = new Uint32Array(password.length);
+    crypto.getRandomValues(array);
+    const mixed = password.split('').map((char, i) => ({ char, rand: array[i] }))
+        .sort((a, b) => a.rand - b.rand)
+        .map(item => item.char)
+        .join('');
+    return mixed;
+}
 router.use(auth_1.authMiddleware);
 router.use(auth_1.requireAdmin);
 // ============================================
@@ -347,8 +379,8 @@ router.get('/usuarios', async (req, res) => {
 router.post('/usuarios', async (req, res) => {
     try {
         const { email, nombre, password, rolIds, activo, enviarInvitacion } = req.body;
-        // Generar contraseña temporal si no se proporciona
-        const tempPassword = password || Math.random().toString(36).slice(-8) + 'A1!';
+        // Generar contraseña temporal segura si no se proporciona
+        const tempPassword = password || generateTempPassword();
         const hashedPassword = await bcryptjs_1.default.hash(tempPassword, 12);
         const usuario = await index_1.prisma.user.create({
             data: {
@@ -367,6 +399,8 @@ router.post('/usuarios', async (req, res) => {
         if (enviarInvitacion) {
             try {
                 const { sendEmail } = await Promise.resolve().then(() => __importStar(require('../services/email.js')));
+                // Usar la URL base desde configuración CORS
+                const baseUrl = index_js_1.config.CORS_ORIGIN.split(',')[0].trim();
                 await sendEmail(usuario.email, 'Invitación a Inventario Almo', `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2>Hola ${usuario.nombre},</h2>
               <p>Has sido invitado al sistema de Inventario Almo.</p>
@@ -376,12 +410,12 @@ router.post('/usuarios', async (req, res) => {
                 <p style="margin: 5px 0 0 0;">Contraseña temporal: <strong>${tempPassword}</strong></p>
               </div>
               <p><strong>Importante:</strong> Al iniciar sesión por primera vez, debes cambiar tu contraseña.</p>
-              <p>Accede en: <a href="http://localhost:5174">http://localhost:5174</a></p>
+              <p>Accede en: <a href="${baseUrl}">${baseUrl}</a></p>
               <p>Saludos,<br>Equipo de Inventario Almo</p>
             </div>`);
             }
             catch (emailError) {
-                console.error('Error sending invitation email:', emailError);
+                logger_js_1.log.error('Error sending invitation email', { error: emailError instanceof Error ? emailError.message : String(emailError) });
             }
         }
         res.status(201).json({

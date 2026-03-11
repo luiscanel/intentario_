@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../prisma/index'
 import { authMiddleware } from '../middleware/auth'
 import { validate, inventarioCloudSchema, inventarioCloudUpdateSchema, inventarioCloudImportSchema, bulkDeleteSchema } from '../validations/index.js'
+import { log } from '../utils/logger.js'
 
 const router = Router()
 
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
     })
     res.json({ success: true, data: items })
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error al obtener inventario cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
     res.status(500).json({ 
       success: false, 
       message: 'Error al obtener inventario cloud',
@@ -32,7 +33,7 @@ router.post('/', validate(inventarioCloudSchema), async (req, res) => {
     })
     res.status(201).json({ success: true, data: item })
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error al crear item cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
     res.status(500).json({ 
       success: false, 
       message: 'Error al crear item',
@@ -51,7 +52,7 @@ router.put('/:id', validate(inventarioCloudUpdateSchema), async (req, res) => {
     })
     res.json({ success: true, data: item })
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error al actualizar item cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
     res.status(500).json({ 
       success: false, 
       message: 'Error al actualizar item',
@@ -69,7 +70,7 @@ router.delete('/:id', async (req, res) => {
     })
     res.json({ success: true, message: 'Item eliminado' })
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error al eliminar item cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
     res.status(500).json({ 
       success: false, 
       message: 'Error al eliminar item',
@@ -90,7 +91,7 @@ router.post('/bulk-delete', validate(bulkDeleteSchema), async (req, res) => {
     })
     res.json({ success: true, message: `${numericIds.length} instancias eliminadas` })
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error en eliminación masiva cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
     res.status(500).json({ 
       success: false, 
       message: 'Error en eliminación masiva',
@@ -104,10 +105,7 @@ router.post('/import', validate(inventarioCloudImportSchema), async (req, res) =
   try {
     const { items } = req.body
     
-    console.log('=== IMPORT CLOUD ===')
-    console.log('Total items received:', items?.length)
-    console.log('Sample item:', JSON.stringify(items?.[0]))
-    console.log('=====================')
+    log.info('Importando inventario cloud', { count: items?.length })
 
     const str = (v: any) => {
       if (v === null || v === undefined) return ''
@@ -160,7 +158,7 @@ router.post('/import', validate(inventarioCloudImportSchema), async (req, res) =
         await prisma.inventarioCloud.create({ data: item })
         created++
       } catch (e: any) {
-        console.error('Error creating item:', e.message)
+        log.warn('Error creando item cloud', { error: e.message })
         skipped++
       }
     }
@@ -172,7 +170,7 @@ router.post('/import', validate(inventarioCloudImportSchema), async (req, res) =
       skipped 
     })
   } catch (error: any) {
-    console.error('Error importing:', error)
+    log.error('Error al importar inventario cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
     res.status(500).json({ 
       success: false, 
       message: `Error al importar: ${error.message}`,

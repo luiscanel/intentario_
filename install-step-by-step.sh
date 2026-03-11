@@ -28,6 +28,7 @@ DOMAIN_OR_IP="${SERVER_IP}"        # Se detectará automáticamente
 ADMIN_EMAIL="jorge.canel@grupoalmo.com"
 ADMIN_PASSWORD="admin123"
 MYSQL_ROOT_PASSWORD=""  # Dejar vacío si no necesitas MySQL externo
+GIT_REPO="https://github.com/luiscanel/intentario_.git"
 
 # ============================================
 # VERIFICAR QUE SE EJECUTA COMO ROOT
@@ -36,6 +37,37 @@ if [ "$EUID" -ne 0 ]; then
   print_error "Este script debe ejecutarse como root"
   echo "Ejecuta: sudo ./install-step-by-step.sh"
   exit 1
+fi
+
+# ============================================
+# VERIFICAR PUERTOS
+# ============================================
+print_status "Verificando puertos del sistema..."
+
+check_port() {
+  local port=$1
+  local service=$2
+  if ss -tuln 2>/dev/null | grep -q ":$port "; then
+    print_warning "Puerto $port ($service) ya está en uso"
+    return 1
+  fi
+  return 0
+}
+
+# Verificar puertos críticos
+PORTS_OK=true
+check_port 22 "SSH" || PORTS_OK=false
+check_port 80 "HTTP" || PORTS_OK=false
+check_port 443 "HTTPS" || PORTS_OK=false
+check_port 3001 "Backend" || PORTS_OK=false
+
+if [ "$PORTS_OK" = false ]; then
+  print_warning "Algunos puertos están en uso. La instalación puede fallar."
+  read -p "¿Continuar de todos modos? (s/n): " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+    exit 1
+  fi
 fi
 
 print_status "Iniciando instalación de Inventario Almo..."
@@ -106,8 +138,6 @@ if [ -d "/opt/inventario-almo" ]; then
   cd inventario-almo
   git pull
 else
-  # REEMPLAZA ESTA URL CON TU REPOSITORIO GIT
-  GIT_REPO="https://github.com/luiscanel/intentario_.git"
   git clone "$GIT_REPO" inventario-almo
   cd inventario-almo
 fi
@@ -134,15 +164,30 @@ echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
 
+# Crear directorio prisma si no existe
+mkdir -p prisma/prisma
+
+# Verificar si ya existe .env y mantener JWT_SECRET
+if [ -f .env ]; then
+  print_warning "El archivo .env ya existe, preservando configuración existente"
+  source .env
+  # Mantener el JWT_SECRET existente o generar uno nuevo si no existe
+  if [ -z "$JWT_SECRET" ]; then
+    JWT_SECRET=$(openssl rand -base64 32)
+  fi
+else
+  JWT_SECRET=$(openssl rand -base64 32)
+fi
+
 # Crear archivo .env con ruta ABSOLUTA a la base de datos
 cat > .env << EOF
 NODE_ENV=production
 PORT=3001
 HOST=0.0.0.0
-JWT_SECRET=$(openssl rand -base64 32)
+JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=24h
-DATABASE_URL=file:/opt/inventario-almo/server/prisma/dev.db
-CORS_ORIGIN=https://$DOMAIN_OR_IP
+DATABASE_URL=file:/opt/inventario-almo/server/prisma/prisma/dev.db
+CORS_ORIGIN=https://${DOMAIN_OR_IP}
 RATE_LIMIT_WINDOW_MS=15 minutes
 RATE_LIMIT_MAX_REQUESTS=100
 AUTH_RATE_LIMIT_MAX=5
@@ -162,8 +207,24 @@ echo -e "==========================================${NC}"
 cd /opt/inventario-almo/server
 sudo -u inventario npm install
 sudo -u inventario npx prisma generate
-sudo -u inventario npx prisma db push
-print_success "Base de datos creada"
+
+# Verificar si la base de datos ya existe
+DB_PATH="/opt/inventario-almo/server/prisma/prisma/dev.db"
+if [ -f "$DB_PATH" ]; then
+  print_warning "La base de datos ya existe en $DB_PATH"
+  read -p "¿Deseas recrearla? Esto borrará todos los datos existentes (s/n): " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Ss]$ ]]; then
+    rm -f "$DB_PATH"
+    sudo -u inventario npx prisma db push
+    print_success "Base de datos recreada"
+  else
+    print_status "Usando base de datos existente"
+  fi
+else
+  sudo -u inventario npx prisma db push
+  print_success "Base de datos creada"
+fi
 
 # ============================================
 # PASO 9: CREAR USUARIO ADMIN
@@ -173,7 +234,13 @@ echo "PASO 9: Creando usuario administrador"
 echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
-sudo -u inventario node create_admin.js
+
+# Pasar credenciales como variables de entorno
+export ADMIN_EMAIL="$ADMIN_EMAIL"
+export ADMIN_PASSWORD="$ADMIN_PASSWORD"
+
+# Crear usuario admin con credenciales configurables
+sudo -u inventario ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node create_admin.js
 print_success "Usuario admin creado"
 
 # Inicializar módulos, roles y permisos del sistema

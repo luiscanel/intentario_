@@ -3,8 +3,46 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '../prisma/index'
 import { authMiddleware, requireAdmin } from '../middleware/auth'
 import { log } from '../utils/logger.js'
+import { config } from '../config/index.js'
 
 const router = Router()
+
+// Generar contraseña temporal segura
+function generateTempPassword(): string {
+  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const lowercase = 'abcdefghjkmnpqrstuvwxyz'
+  const numbers = '23456789'
+  const special = '!@#$%'
+  
+  const getRandomChar = (chars: string) => {
+    const array = new Uint32Array(1)
+    crypto.getRandomValues(array)
+    return chars[array[0] % chars.length]
+  }
+  
+  let password = ''
+  password += getRandomChar(uppercase)
+  password += getRandomChar(lowercase)
+  password += getRandomChar(numbers)
+  password += getRandomChar(special)
+  
+  const allChars = uppercase + lowercase + numbers + special
+  for (let i = 4; i < 12; i++) {
+    const array = new Uint32Array(1)
+    crypto.getRandomValues(array)
+    password += allChars[array[0] % allChars.length]
+  }
+  
+  // Mezclar de forma criptográficamente segura
+  const array = new Uint32Array(password.length)
+  crypto.getRandomValues(array)
+  const mixed = password.split('').map((char, i) => ({ char, rand: array[i] }))
+    .sort((a, b) => a.rand - b.rand)
+    .map(item => item.char)
+    .join('')
+  
+  return mixed
+}
 
 router.use(authMiddleware)
 router.use(requireAdmin)
@@ -335,8 +373,8 @@ router.post('/usuarios', async (req, res) => {
   try {
     const { email, nombre, password, rolIds, activo, enviarInvitacion } = req.body
 
-    // Generar contraseña temporal si no se proporciona
-    const tempPassword = password || Math.random().toString(36).slice(-8) + 'A1!'
+    // Generar contraseña temporal segura si no se proporciona
+    const tempPassword = password || generateTempPassword()
     const hashedPassword = await bcrypt.hash(tempPassword, 12)
 
     const usuario = await prisma.user.create({
@@ -357,6 +395,8 @@ router.post('/usuarios', async (req, res) => {
     if (enviarInvitacion) {
       try {
         const { sendEmail } = await import('../services/email.js')
+        // Usar la URL base desde configuración CORS
+        const baseUrl = config.CORS_ORIGIN.split(',')[0].trim()
         await sendEmail(
           usuario.email,
           'Invitación a Inventario Almo',
@@ -369,12 +409,12 @@ router.post('/usuarios', async (req, res) => {
                 <p style="margin: 5px 0 0 0;">Contraseña temporal: <strong>${tempPassword}</strong></p>
               </div>
               <p><strong>Importante:</strong> Al iniciar sesión por primera vez, debes cambiar tu contraseña.</p>
-              <p>Accede en: <a href="http://localhost:5174">http://localhost:5174</a></p>
+              <p>Accede en: <a href="${baseUrl}">${baseUrl}</a></p>
               <p>Saludos,<br>Equipo de Inventario Almo</p>
             </div>`
         )
       } catch (emailError) {
-        console.error('Error sending invitation email:', emailError)
+        log.error('Error sending invitation email', { error: emailError instanceof Error ? emailError.message : String(emailError) })
       }
     }
 

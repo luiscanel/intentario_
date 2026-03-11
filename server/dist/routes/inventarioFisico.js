@@ -4,6 +4,7 @@ const express_1 = require("express");
 const index_1 = require("../prisma/index");
 const auth_1 = require("../middleware/auth");
 const index_js_1 = require("../validations/index.js");
+const logger_js_1 = require("../utils/logger.js");
 const router = (0, express_1.Router)();
 router.use(auth_1.authMiddleware);
 // Obtener todos los items
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
         res.json({ success: true, data: items });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al obtener inventario físico', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al obtener inventario físico',
@@ -32,7 +33,7 @@ router.post('/', (0, index_js_1.validate)(index_js_1.inventarioFisicoSchema), as
         res.status(201).json({ success: true, data: item });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al crear item', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al crear item',
@@ -51,7 +52,7 @@ router.put('/:id', (0, index_js_1.validate)(index_js_1.inventarioFisicoUpdateSch
         res.json({ success: true, data: item });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al actualizar item', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al actualizar item',
@@ -69,7 +70,7 @@ router.delete('/:id', async (req, res) => {
         res.json({ success: true, message: 'Item eliminado' });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error al eliminar item', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error al eliminar item',
@@ -89,7 +90,7 @@ router.post('/bulk-delete', (0, index_js_1.validate)(index_js_1.bulkDeleteSchema
         res.json({ success: true, message: `${numericIds.length} equipos eliminados` });
     }
     catch (error) {
-        console.error('Error:', error);
+        logger_js_1.log.error('Error en eliminación masiva', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: 'Error en eliminación masiva',
@@ -153,7 +154,7 @@ router.post('/import', (0, index_js_1.validate)(index_js_1.inventarioFisicoImpor
         });
     }
     catch (error) {
-        console.error('Error importing:', error);
+        logger_js_1.log.error('Error al importar inventario físico', { error: error instanceof Error ? error.message : String(error), path: req.path });
         res.status(500).json({
             success: false,
             message: `Error al importar: ${error.message}`,

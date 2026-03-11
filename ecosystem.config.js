@@ -11,13 +11,22 @@
 // - Frontend: 5174 (debe coincidir con Nginx)
 // ============================================
 
+const path = require('path');
+
+// Detectar si es producción (servidor dedicado)
+const isProduction = process.env.PM2_HOME || process.env.NODE_ENV === 'production';
+
+// Rutas absolutas para producción
+const baseDir = isProduction ? '/opt/inventario-almo' : path.join(__dirname);
+const serverDir = path.join(baseDir, 'server');
+const clientDir = path.join(baseDir, 'client');
+
 module.exports = {
   apps: [
     {
       name: 'inventario-backend',
-      script: 'npx',
-      args: 'tsx src/index.ts',
-      cwd: './server',
+      script: path.join(serverDir, 'dist/index.js'),
+      cwd: serverDir,
       interpreter: 'none',
       instances: 1,
       autorestart: true,
@@ -36,9 +45,9 @@ module.exports = {
     },
     {
       name: 'inventario-frontend',
-      script: 'npx',
-      args: 'vite preview --host 0.0.0.0 --port 5174',
-      cwd: './client',
+      script: 'npm',
+      args: 'run preview -- --host 0.0.0.0 --port 5174',
+      cwd: clientDir,
       interpreter: 'none',
       instances: 1,
       autorestart: true,

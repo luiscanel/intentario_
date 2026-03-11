@@ -1,10 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'jorge.canel@grupoalmo.com';
-  const password = 'admin123'; // Cambiar en producción
+  // Usar variables de entorno o valores por defecto
+  const email = process.env.ADMIN_EMAIL || 'jorge.canel@grupoalmo.com';
+  const password = process.env.ADMIN_PASSWORD || 'admin123';
 
   // Verificar si ya existe
   const existingUser = await prisma.user.findUnique({
@@ -16,12 +18,15 @@ async function main() {
     return;
   }
 
+  // Hashear contraseña
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   // Crear usuario admin
   const user = await prisma.user.create({
     data: {
       email,
-      password, // En producción usar hash: bcrypt.hash(password, 10)
-      nombre: 'Jorge Canel',
+      password: hashedPassword,
+      nombre: 'Administrador',
       rol: 'admin',
       activo: true,
       debeCambiarPass: false
