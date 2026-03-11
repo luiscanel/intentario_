@@ -10,10 +10,18 @@ router.use(authMiddleware)
 // Obtener todas las licencias
 router.get('/', async (req, res) => {
   try {
-    // Usar raw query para evitar error de Prisma con include
+    // Usar raw query con CAST para evitar problemas de conversión de fechas en SQLite
     const licencias = await prisma.$queryRaw`
-      SELECT l.*, p.nombre as proveedorNombre, p.email as proveedorEmail, p.telefono as proveedorTelefono,
-             s.host as servidorHost, s.ip as servidorIp
+      SELECT 
+        l.id, l.nombre, l.tipo, l.version, l.cantidad, l.usada, 
+        l.costo, l.moneda, 
+        CAST(l.fechaCompra AS TEXT) as fechaCompra,
+        CAST(l.fechaVencimiento AS TEXT) as fechaVencimiento,
+        l.proveedorId, l.servidorId, l.notas, l.activa,
+        CAST(l.createdAt AS TEXT) as createdAt,
+        CAST(l.updatedAt AS TEXT) as updatedAt,
+        p.nombre as proveedorNombre, p.email as proveedorEmail, p.telefono as proveedorTelefono,
+        s.host as servidorHost, s.ip as servidorIp
       FROM Licencia l
       LEFT JOIN Proveedor p ON l.proveedorId = p.id
       LEFT JOIN Servidor s ON l.servidorId = s.id
@@ -22,7 +30,22 @@ router.get('/', async (req, res) => {
     
     // Transformar resultado
     const data = (licencias as any[]).map((l) => ({
-      ...l,
+      id: l.id,
+      nombre: l.nombre,
+      tipo: l.tipo,
+      version: l.version,
+      cantidad: l.cantidad,
+      usada: l.usada,
+      costo: l.costo,
+      moneda: l.moneda,
+      fechaCompra: l.fechaCompra,
+      fechaVencimiento: l.fechaVencimiento,
+      proveedorId: l.proveedorId,
+      servidorId: l.servidorId,
+      notas: l.notas,
+      activa: l.activa,
+      createdAt: l.createdAt,
+      updatedAt: l.updatedAt,
       proveedor: l.proveedorId ? {
         id: l.proveedorId,
         nombre: l.proveedorNombre,
