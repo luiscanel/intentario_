@@ -38,7 +38,7 @@ rm -rf node_modules client/node_modules server/node_modules
 
 # Configurar .env
 echo "[3/8] Configurando servidor..."
-echo -e "CORS_ORIGIN=http://$SERVER_IP\nDATABASE_URL=file:./prisma/dev.db" > server/.env
+echo -e "CORS_ORIGIN=http://$SERVER_IP\nDATABASE_URL=file:./prisma/dev.db\nJWT_SECRET=inventario_almo_2026_seguro_32chars" > server/.env
 
 echo "[4/8] Configurando cliente..."
 echo "VITE_API_URL=http://$SERVER_IP:3001" > client/.env
