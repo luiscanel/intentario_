@@ -62,8 +62,27 @@ pm2 delete inventario-frontend 2>/dev/null || true
 cd "$BASE_DIR"
 pm2 start ecosystem.config.js
 
-# Guardar configuración
+# Guardar configuración para auto-arranque
 pm2 save
+
+# Configurar auto-arranque al reiniciar servidor
+echo -e "${YELLOW}[6] Configurando auto-arranque al reiniciar...${NC}"
+
+# Detectar el sistema init y configurar
+if command -v systemctl &> /dev/null; then
+    # systemd (Debian/Ubuntu/CentOS 7+)
+    pm2 startup systemd -u root --hp /root 2>/dev/null || true
+elif command -v update-rc.d &> /dev/null; then
+    # SysV init (Debian/Ubuntu antiguo)
+    pm2 startup sysvinit -u root --hp /root 2>/dev/null || true
+elif command -v chkconfig &> /dev/null; then
+    # SysV init (CentOS antiguo)
+    pm2 startup sysvinit -u root --hp /root 2>/dev/null || true
+else
+    pm2 startup 2>/dev/null || true
+fi
+
+echo -e "${GREEN}✅ Servicios configurados para auto-arranque${NC}"
 
 echo -e "${GREEN}=========================================="
 echo "✅ Actualización completada"
