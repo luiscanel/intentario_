@@ -82,10 +82,10 @@ export default function Inventory() {
   const { toast } = useToast()
   
   // Permisos
-  const canCreate = usePermission('servidores', 'crear')
-  const canEdit = usePermission('servidores', 'editar')
-  const canDelete = usePermission('servidores', 'eliminar')
-  const canExport = usePermission('servidores', 'exportar')
+  const canCreate = usePermission('inventario_servidores', 'crear')
+  const canEdit = usePermission('inventario_servidores', 'editar')
+  const canDelete = usePermission('inventario_servidores', 'eliminar')
+  const canExport = usePermission('inventario_servidores', 'exportar')
 
   useEffect(() => {
     loadServidores()
