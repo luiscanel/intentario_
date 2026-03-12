@@ -3,7 +3,7 @@
 // Inventario Almo - Servidor Dedicado
 // ============================================
 //
-// IMPORTANTE: Este archivo se usa tanto para desarrollo local como para producción.
+// IMPORTANTE: Este archivo detecta automáticamente la ubicación del proyecto.
 // En producción, los paths se convierten a absolutos automáticamente.
 //
 // Puertos:
@@ -12,9 +12,21 @@
 // ============================================
 
 const path = require('path');
+const fs = require('fs');
 
-// Siempre usar rutas absolutas en producción
-const baseDir = '/opt/inventario-almo';
+// Detectar automáticamente la ubicación del proyecto
+// Buscar desde el directorio actual hacia arriba
+let baseDir = __dirname;
+
+// Si estamos en /opt/inventario-almo, usar ese path
+// Si no, verificar si existe la estructura del proyecto
+if (!fs.existsSync(path.join(baseDir, 'server', 'package.json'))) {
+  // Intentar con /opt/inventario-almo
+  if (fs.existsSync('/opt/inventario-almo/server/package.json')) {
+    baseDir = '/opt/inventario-almo';
+  }
+}
+
 const serverDir = path.join(baseDir, 'server');
 const clientDir = path.join(baseDir, 'client');
 

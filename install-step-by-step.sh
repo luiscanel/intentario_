@@ -30,6 +30,16 @@ ADMIN_PASSWORD="admin123"
 MYSQL_ROOT_PASSWORD=""  # Dejar vacío si no necesitas MySQL externo
 GIT_REPO="https://github.com/luiscanel/intentario_.git"
 
+# Detectar automáticamente la ubicación del proyecto
+# Si se ejecuta desde el directorio del proyecto, usar ese directorio
+# Si no, usar /opt/inventario-almo
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/server/package.json" ]; then
+  PROJECT_DIR="$SCRIPT_DIR"
+else
+  PROJECT_DIR="/opt/inventario-almo"
+fi
+
 # ============================================
 # VERIFICAR QUE SE EJECUTA COMO ROOT
 # ============================================
@@ -130,16 +140,18 @@ echo -e "${BLUE}=========================================="
 echo "PASO 5: Clonando proyecto"
 echo -e "==========================================${NC}"
 
-cd /opt
+cd "$PROJECT_DIR"
 
 # Si el repositorio existe, actualizar; si no, clonar
-if [ -d "/opt/inventario-almo" ]; then
-  print_warning "El proyecto ya existe en /opt/inventario-almo"
-  cd inventario-almo
-  git pull
+if [ -d "$PROJECT_DIR" ] && [ -f "$PROJECT_DIR/package.json" ]; then
+  print_warning "El proyecto ya existe en $PROJECT_DIR"
+  cd "$PROJECT_DIR"
+  git pull 2>/dev/null || true
 else
+  cd /opt
   git clone "$GIT_REPO" inventario-almo
   cd inventario-almo
+  PROJECT_DIR="/opt/inventario-almo"
 fi
 
 chown -R inventario:inventario .
@@ -186,7 +198,7 @@ PORT=3001
 HOST=0.0.0.0
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=24h
-DATABASE_URL=file:/opt/inventario-almo/server/prisma/prisma/dev.db
+DATABASE_URL=file:${PROJECT_DIR}/server/prisma/prisma/dev.db
 CORS_ORIGIN=https://${DOMAIN_OR_IP}
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
@@ -195,7 +207,12 @@ EOF
 
 chown inventario:inventario .env
 chmod 600 .env
-print_success "Variables de entorno configuradas"
+
+# COPIAR .env A LA CARPETA SERVER (requerido por PM2 y dotenv)
+cp .env server/.env
+chown inventario:inventario server/.env
+chmod 600 server/.env
+print_success "Variables de entorno configuradas en raíz y server/"
 
 # ============================================
 # PASO 8: GENERAR BASE DE DATOS
@@ -214,7 +231,7 @@ sudo -u inventario npm install
 sudo -u inventario npx prisma generate
 
 # Verificar si la base de datos ya existe
-DB_PATH="/opt/inventario-almo/server/prisma/prisma/dev.db"
+DB_PATH="${PROJECT_DIR}/server/prisma/prisma/dev.db"
 if [ -f "$DB_PATH" ]; then
   print_warning "La base de datos ya existe en $DB_PATH"
   print_status "El script de instalación sincronizará los datos sin borrarlos"
@@ -280,11 +297,10 @@ echo -e "${BLUE}=========================================="
 echo "PASO 12: Configurando PM2"
 echo -e "==========================================${NC}"
 
-cd /opt/inventario-almo
+cd "$PROJECT_DIR"
 
-# Modificar ecosystem.config.js para rutas absolutas
-sed -i "s|cwd: './server'|cwd: '/opt/inventario-almo/server'|g" ecosystem.config.js
-sed -i "s|cwd: './client'|cwd: '/opt/inventario-almo/client'|g" ecosystem.config.js
+# Modificar ecosystem.config.js para usar PROJECT_DIR
+sed -i "s|/opt/inventario-almo|${PROJECT_DIR}|g" ecosystem.config.js
 
 # Iniciar servicios
 sudo -u inventario pm2 start ecosystem.config.js
@@ -300,7 +316,7 @@ echo "PASO 13: Configurando Nginx"
 echo -e "==========================================${NC}"
 
 # Copiar configuración
-cp /opt/inventario-almo/nginx.conf /etc/nginx/sites-available/inventario-almo
+cp "$PROJECT_DIR/nginx.conf" /etc/nginx/sites-available/inventario-almo
 ln -sf /etc/nginx/sites-available/inventario-almo /etc/nginx/sites-enabled/
 
 # Generar certificado SSL autofirmado
