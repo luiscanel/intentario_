@@ -397,7 +397,7 @@ export default function Dashboard() {
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         labelLine={true}
                       >
-                        {(stats?.porSO || []).map((entry: any, index: number) => (
+                        {(stats?.porSO || []).map((_: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={index === 0 ? '#f43f5e' : index === 1 ? '#8b5cf6' : '#64748b'} />
                         ))}
                       </Pie>
