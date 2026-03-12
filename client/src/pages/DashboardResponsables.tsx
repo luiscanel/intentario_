@@ -131,6 +131,7 @@ export default function DashboardResponsables() {
           title="Distribución por Responsable" 
           icon={User}
           colorClass="bg-gradient-to-br from-violet-500 to-purple-500"
+          dataKey="total"
         />
       </div>
 

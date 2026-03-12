@@ -15,9 +15,12 @@ RUN npm install
 # Copiar código fuente
 COPY server/ ./
 
+# Crear directorio para la base de datos
+RUN mkdir -p prisma/prisma
+
 # Generar Prisma client y DB
-RUN npx prisma generate
-RUN npx prisma db push
+RUN DATABASE_URL=file:./prisma/dev.db npx prisma generate
+RUN DATABASE_URL=file:./prisma/dev.db npx prisma db push
 
 EXPOSE 3001
 

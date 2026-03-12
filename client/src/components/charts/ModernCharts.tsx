@@ -133,11 +133,11 @@ export const BarChartCard = ({ data, title, icon: Icon, colorClass, dataKey = "c
               {layout === "vertical" ? (
                 <>
                   <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis dataKey={dataKey === "count" ? "name" : dataKey} type="category" width={100} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                 </>
               ) : (
                 <>
-                  <XAxis dataKey={dataKey === "count" ? "name" : dataKey} tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                 </>
               )}
