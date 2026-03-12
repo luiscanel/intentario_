@@ -267,8 +267,24 @@ rm $APP_DIR/server/create_initial_data.js
 # ============================================
 log_step 12 13 "Configurando PM2..."
 
+# Crear directorio de logs
+mkdir -p /var/log/inventario
+chown -R $APP_USER:$APP_GROUP /var/log/inventario
+
+# Detener procesos anteriores
+sudo -u $APP_USER pm2 delete all 2>/dev/null || true
+
+# Iniciar servicios
 cd $APP_DIR
 sudo -u $APP_USER pm2 start ecosystem.config.js
+
+# Esperar a que inicie
+sleep 3
+
+# Verificar estado
+sudo -u $APP_USER pm2 status
+
+# Guardar configuración
 sudo -u $APP_USER pm2 save
 
 # Auto-start PM2

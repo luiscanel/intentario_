@@ -36,9 +36,8 @@ module.exports = {
       out_file: '/var/log/inventario/backend-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
-      wait_ready: true,
-      listen_timeout: 5000,
-      kill_timeout: 3000
+      wait_ready: false,
+      kill_timeout: 5000
     },
     {
       name: 'inventario-frontend',
