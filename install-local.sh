@@ -101,8 +101,9 @@ log_step 6 13 "Copiando archivos..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -f "$SCRIPT_DIR/package.json" ]; then
-    cp -r $SCRIPT_DIR/server/* $APP_DIR/
-    cp -r $SCRIPT_DIR/client/* $APP_DIR/
+    mkdir -p $APP_DIR/server $APP_DIR/client
+    cp -r $SCRIPT_DIR/server/* $APP_DIR/server/
+    cp -r $SCRIPT_DIR/client/* $APP_DIR/client/
     cp $SCRIPT_DIR/package*.json $APP_DIR/ 2>/dev/null || true
     cp $SCRIPT_DIR/ecosystem.config.js $APP_DIR/ 2>/dev/null || true
     cp $SCRIPT_DIR/nginx.conf $APP_DIR/ 2>/dev/null || true
