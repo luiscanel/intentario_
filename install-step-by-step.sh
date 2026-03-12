@@ -316,6 +316,9 @@ echo -e "==========================================${NC}"
 cp "$PROJECT_DIR/nginx.conf" /etc/nginx/sites-available/inventario-almo
 ln -sf /etc/nginx/sites-available/inventario-almo /etc/nginx/sites-enabled/
 
+# Eliminar sitio default para evitar conflictos
+rm -f /etc/nginx/sites-enabled/default
+
 # Generar certificado SSL autofirmado
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
