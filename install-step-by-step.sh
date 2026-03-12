@@ -155,7 +155,7 @@ else
 fi
 
 chown -R inventario:inventario .
-print_success "Proyecto clonado en /opt/inventario-almo"
+print_success "Proyecto clonado en $PROJECT_DIR"
 
 # ============================================
 # PASO 6: INSTALAR DEPENDENCIAS NPM
@@ -174,7 +174,7 @@ echo -e "${BLUE}=========================================="
 echo "PASO 7: Configurando variables de entorno"
 echo -e "==========================================${NC}"
 
-cd /opt/inventario-almo/server
+cd "$PROJECT_DIR"
 
 # Crear directorio prisma si no existe
 mkdir -p prisma/prisma
@@ -221,7 +221,7 @@ echo -e "${BLUE}=========================================="
 echo "PASO 8: Generando base de datos"
 echo -e "==========================================${NC}"
 
-cd /opt/inventario-almo/server
+cd "$PROJECT_DIR/server"
 
 # Crear directorio prisma/prisma si no existe (por si acaso)
 mkdir -p prisma/prisma
@@ -249,7 +249,7 @@ echo -e "${BLUE}=========================================="
 echo "PASO 9: Creando usuario administrador"
 echo -e "==========================================${NC}"
 
-cd /opt/inventario-almo/server
+cd "$PROJECT_DIR/server"
 
 # Pasar credenciales como variables de entorno
 export ADMIN_EMAIL="$ADMIN_EMAIL"
@@ -272,7 +272,7 @@ echo -e "${BLUE}=========================================="
 echo "PASO 10: Compilando frontend"
 echo -e "==========================================${NC}"
 
-cd /opt/inventario-almo/client
+cd "$PROJECT_DIR/client"
 sudo -u inventario npm run build
 print_success "Frontend compilado"
 
