@@ -205,6 +205,11 @@ echo "PASO 8: Generando base de datos"
 echo -e "==========================================${NC}"
 
 cd /opt/inventario-almo/server
+
+# Crear directorio prisma/prisma si no existe (por si acaso)
+mkdir -p prisma/prisma
+chown inventario:inventario prisma/prisma
+
 sudo -u inventario npm install
 sudo -u inventario npx prisma generate
 
@@ -215,6 +220,7 @@ if [ -f "$DB_PATH" ]; then
   print_status "El script de instalación sincronizará los datos sin borrarlos"
   print_status "Tus usuarios y configuraciones se mantendrán"
 else
+  # Crear la base de datos
   sudo -u inventario npx prisma db push
   print_success "Base de datos creada"
 fi
