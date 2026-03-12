@@ -13,11 +13,8 @@
 
 const path = require('path');
 
-// Detectar si es producción (servidor dedicado)
-const isProduction = process.env.PM2_HOME || process.env.NODE_ENV === 'production';
-
-// Rutas absolutas para producción
-const baseDir = isProduction ? '/opt/inventario-almo' : path.join(__dirname);
+// Siempre usar rutas absolutas en producción
+const baseDir = '/opt/inventario-almo';
 const serverDir = path.join(baseDir, 'server');
 const clientDir = path.join(baseDir, 'client');
 
@@ -41,7 +38,10 @@ module.exports = {
       error_file: '/var/log/inventario/backend-error.log',
       out_file: '/var/log/inventario/backend-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      merge_logs: true
+      merge_logs: true,
+      wait_ready: true,
+      listen_timeout: 5000,
+      kill_timeout: 3000
     },
     {
       name: 'inventario-frontend',
