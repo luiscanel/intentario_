@@ -178,7 +178,12 @@ ADMIN_NAME=${ADMIN_NAME:-Administrador}
 
 read -p "Contraseña (dejar vacío para auto-generar): " -s ADMIN_PASS
 echo ""
-[ -z "$ADMIN_PASS" ] && ADMIN_PASS=$ADMIN_PASSWORD && log_warn "Contraseña auto-generada"
+if [ -z "$ADMIN_PASS" ]; then
+    ADMIN_PASS=$ADMIN_PASSWORD
+    log_warn "Contraseña auto-generada: $ADMIN_PASS"
+else
+    log_info "Contraseña configurada"
+fi
 
 # Crear script de admin
 cat > $APP_DIR/server/create_admin_temp.js << 'ADMINEOF'
