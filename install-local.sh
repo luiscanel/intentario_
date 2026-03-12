@@ -210,6 +210,58 @@ chown $APP_USER:$APP_GROUP $APP_DIR/server/create_admin_temp.js
 sudo -u $APP_USER node $APP_DIR/server/create_admin_temp.js
 rm $APP_DIR/server/create_admin_temp.js
 
+# Crear datos iniciales necesarios
+log_info "Creando datos iniciales..."
+
+cat > $APP_DIR/server/create_initial_data.js << 'INITEOF'
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Email config por defecto
+  await prisma.emailConfig.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      host: 'smtp.gmail.com',
+      puerto: 587,
+      usuario: 'admin@grupoalmo.com',
+      contrasena: 'changeme',
+      usandoTls: true,
+      emailFrom: 'admin@grupoalmo.com',
+      activo: true
+    }
+  });
+
+  // Configuración de alertas
+  const configs = [
+    { tipo: 'servidor_caido', diasAntelacion: 0, activo: true },
+    { tipo: 'contrato_por_vencer', diasAntelacion: 30, activo: true },
+    { tipo: 'licencia_por_vencer', diasAntelacion: 30, activo: true },
+    { tipo: 'certificado_por_vencer', diasAntelacion: 30, activo: true }
+  ];
+
+  for (const config of configs) {
+    await prisma.configuracionAlerta.upsert({
+      where: { tipo: config.tipo },
+      update: config,
+      create: config
+    });
+  }
+
+  console.log('Datos iniciales creados');
+}
+
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
+INITEOF
+
+chown $APP_USER:$APP_GROUP $APP_DIR/server/create_initial_data.js
+sudo -u $APP_USER node $APP_DIR/server/create_initial_data.js
+rm $APP_DIR/server/create_initial_data.js
+
 # ============================================
 # 12. Configurar PM2
 # ============================================
