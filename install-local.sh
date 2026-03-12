@@ -236,14 +236,14 @@ async function main() {
 
   // Configuración de alertas
   const configs = [
-    { tipo: 'servidor_caido', diasAntelacion: 0, activo: true },
-    { tipo: 'contrato_por_vencer', diasAntelacion: 30, activo: true },
-    { tipo: 'licencia_por_vencer', diasAntelacion: 30, activo: true },
-    { tipo: 'certificado_por_vencer', diasAntelacion: 30, activo: true }
+    { tipo: 'servidor_caido', nombre: 'Servidor Caído', diasAntelacion: 0, diasVerificacion: 5, activo: true },
+    { tipo: 'contrato_vencer', nombre: 'Contrato por Vencer', diasAntelacion: 30, diasVerificacion: 7, activo: true },
+    { tipo: 'licencia_vencer', nombre: 'Licencia por Vencer', diasAntelacion: 30, diasVerificacion: 7, activo: true },
+    { tipo: 'certificado_vencer', nombre: 'Certificado por Vencer', diasAntelacion: 30, diasVerificacion: 7, activo: true }
   ];
 
   for (const config of configs) {
-    await prisma.configuracionAlerta.upsert({
+    await prisma.configAlerta.upsert({
       where: { tipo: config.tipo },
       update: config,
       create: config
@@ -271,6 +271,13 @@ log_step 12 13 "Configurando PM2..."
 mkdir -p /var/log/inventario
 chown -R $APP_USER:$APP_GROUP /var/log/inventario
 
+# Verificar y liberar puerto 3001 si está en uso
+if lsof -i :$BACKEND_PORT > /dev/null 2>&1; then
+    log_warn "Puerto $BACKEND_PORT en uso, liberando..."
+    lsof -ti :$BACKEND_PORT | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+
 # Detener procesos anteriores
 sudo -u $APP_USER pm2 delete all 2>/dev/null || true
 
@@ -279,10 +286,17 @@ cd $APP_DIR
 sudo -u $APP_USER pm2 start ecosystem.config.js
 
 # Esperar a que inicie
-sleep 3
+sleep 5
 
-# Verificar estado
-sudo -u $APP_USER pm2 status
+# Verificar que el backend esté corriendo
+BACKEND_PID=$(sudo -u $APP_USER pm2 jlist | grep -o '"pid":[0-9]*' | grep -o '[0-9]*' | head -1)
+if [ -z "$BACKEND_PID" ] || [ "$BACKEND_PID" = "null" ]; then
+    log_error "El backend no inició correctamente"
+    sudo -u $APP_USER pm2 logs inventario-backend --lines 30
+    exit 1
+fi
+
+log_info "Backend iniciado con PID: $BACKEND_PID"
 
 # Guardar configuración
 sudo -u $APP_USER pm2 save
