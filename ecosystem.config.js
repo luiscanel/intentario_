@@ -2,15 +2,9 @@
 // PM2 Ecosystem Configuration
 // Inventario Almo - Servidor Dedicado
 // ============================================
-//
-// Puertos:
-// - Backend: 3001
-// - Frontend: 5174 (debe coincidir con Nginx)
-// ============================================
 
 const path = require('path');
 
-// Usar rutas absolutas basadas en la ubicación del archivo
 const baseDir = path.resolve(__dirname);
 const serverDir = path.join(baseDir, 'server');
 const clientDir = path.join(baseDir, 'client');
@@ -19,14 +13,13 @@ module.exports = {
   apps: [
     {
       name: 'inventario-backend',
-      script: path.join(serverDir, 'dist/index.js'),
+      script: './dist/index.js',
       cwd: serverDir,
-      interpreter: 'none',
+      interpreter: 'node',
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '400M',
-      node_args: '--max-old-space-size=384',
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
@@ -34,10 +27,7 @@ module.exports = {
       },
       error_file: '/var/log/inventario/backend-error.log',
       out_file: '/var/log/inventario/backend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      merge_logs: true,
-      wait_ready: false,
-      kill_timeout: 5000
+      merge_logs: true
     },
     {
       name: 'inventario-frontend',
@@ -49,13 +39,11 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '250M',
-      node_args: '--max-old-space-size=192',
       env: {
         NODE_ENV: 'production'
       },
       error_file: '/var/log/inventario/frontend-error.log',
       out_file: '/var/log/inventario/frontend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true
     }
   ]
