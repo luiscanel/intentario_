@@ -176,23 +176,23 @@ ADMIN_NAME="Jorge Canel"
 ADMIN_PASS="admin123"
 log_info "Usuario admin: $ADMIN_EMAIL"
 
-# Crear script de admin
-cat > $APP_DIR/server/create_admin_temp.js << 'ADMINEOF'
+# Crear script de admin con valores directos
+cat > $APP_DIR/server/create_admin_temp.js << ADMINEOF
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASS, 12);
+  const hashedPassword = await bcrypt.hash('$ADMIN_PASS', 12);
   
   await prisma.user.upsert({
-    where: { email: process.env.ADMIN_EMAIL },
+    where: { email: '$ADMIN_EMAIL' },
     update: { password: hashedPassword },
     create: {
-      email: process.env.ADMIN_EMAIL,
+      email: '$ADMIN_EMAIL',
       password: hashedPassword,
-      nombre: process.env.ADMIN_NAME,
+      nombre: '$ADMIN_NAME',
       rol: 'admin',
       activo: true
     }
@@ -203,11 +203,11 @@ async function main() {
 
 main()
   .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .finally(() => prisma.\$disconnect());
 ADMINEOF
 
 chown $APP_USER:$APP_GROUP $APP_DIR/server/create_admin_temp.js
-ADMIN_EMAIL=$ADMIN_EMAIL ADMIN_NAME="$ADMIN_NAME" ADMIN_PASS=$ADMIN_PASS sudo -u $APP_USER node $APP_DIR/server/create_admin_temp.js
+sudo -u $APP_USER node $APP_DIR/server/create_admin_temp.js
 rm $APP_DIR/server/create_admin_temp.js
 
 # ============================================
@@ -219,8 +219,8 @@ cd $APP_DIR
 sudo -u $APP_USER pm2 start ecosystem.config.js
 sudo -u $APP_USER pm2 save
 
-# Auto-start
-sudo env PATH=\$PATH:/usr/local/bin pm2 startup
+# Auto-start PM2
+sudo -u $APP_USER pm2 startup
 
 # ============================================
 # RESUMEN FINAL
