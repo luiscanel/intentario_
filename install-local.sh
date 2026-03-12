@@ -170,20 +170,11 @@ sudo -u $APP_USER npx prisma db push
 # ============================================
 log_step 11 13 "Creando usuario admin..."
 
-read -p "Email admin [admin@grupoalmo.com]: " ADMIN_EMAIL
-ADMIN_EMAIL=${ADMIN_EMAIL:-admin@grupoalmo.com}
-
-read -p "Nombre admin [Administrador]: " ADMIN_NAME
-ADMIN_NAME=${ADMIN_NAME:-Administrador}
-
-read -p "Contraseña (dejar vacío para auto-generar): " -s ADMIN_PASS
-echo ""
-if [ -z "$ADMIN_PASS" ]; then
-    ADMIN_PASS=$ADMIN_PASSWORD
-    log_warn "Contraseña auto-generada: $ADMIN_PASS"
-else
-    log_info "Contraseña configurada"
-fi
+# Usuario admin por defecto
+ADMIN_EMAIL="jorge.canel@grupoalmo.com"
+ADMIN_NAME="Jorge Canel"
+ADMIN_PASS="admin123"
+log_info "Usuario admin: $ADMIN_EMAIL"
 
 # Crear script de admin
 cat > $APP_DIR/server/create_admin_temp.js << 'ADMINEOF'
