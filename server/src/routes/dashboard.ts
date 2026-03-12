@@ -49,7 +49,7 @@ router.get('/stats', async (req, res) => {
     })
     const porEstado = Object.entries(estadoCount).map(([estado, count]) => ({ estado, count }))
     
-    // Por sistema operativo (VMs)
+    // Por sistema operativo (VMs) - solo Windows/Linux
     const soCount: Record<string, number> = {}
     servidores.forEach(s => {
       const so = s.sistemaOperativo || 'Sin especificar'
@@ -57,7 +57,7 @@ router.get('/stats', async (req, res) => {
     })
     const porSO = Object.entries(soCount).map(([so, count]) => ({ so, count })).sort((a, b) => b.count - a.count)
     
-    // Por sistema operativo con versión (VMs)
+    // Por sistema operativo con versión (VMs) - versión completa
     const soVersionCount: Record<string, number> = {}
     servidores.forEach(s => {
       const so = s.sistemaOperativo || 'Sin especificar'
@@ -96,8 +96,29 @@ router.get('/stats', async (req, res) => {
     })
     const porMarca = Object.entries(marcaCount).map(([marca, count]) => ({ marca, count })).sort((a, b) => b.count - a.count)
 
+    // Por responsable (VMs)
+    const responsableCount: Record<string, number> = {}
+    servidores.forEach(s => {
+      const resp = s.responsable || 'Sin responsable'
+      responsableCount[resp] = (responsableCount[resp] || 0) + 1
+    })
+    const porResponsableVM = Object.entries(responsableCount).map(([responsable, count]) => ({ responsable, count })).sort((a, b) => b.count - a.count)
+
     // Stats de Cloud
     const cloudStats = await getCloudStats()
+
+    // Combinar responsables de VMs y Cloud
+    const allResponsables: Record<string, number> = {}
+    porResponsableVM.forEach(r => { allResponsables[r.responsable] = r.count })
+    cloudStats.porResponsable?.forEach((r: any) => { 
+      allResponsables[r.responsable] = (allResponsables[r.responsable] || 0) + r.count 
+    })
+    const porResponsable = Object.entries(allResponsables).map(([responsable, count]) => ({ responsable, count })).sort((a, b) => b.count - a.count)
+
+    const conResponsableVM = servidores.filter(s => s.responsable).length
+    const totalConResponsable = conResponsableVM + (cloudStats.conResponsable || 0)
+    const totalItems = servidores.length + (cloudStats.totalInstancias || 0)
+    const porcentajeConResponsable = totalItems > 0 ? Math.round((totalConResponsable / totalItems) * 100) : 0
 
     res.json({
       // VMs
@@ -119,7 +140,19 @@ router.get('/stats', async (req, res) => {
       porCategoria,
       porMarca,
       // Cloud
-      ...cloudStats
+      totalInstancias: cloudStats.totalInstancias,
+      porNube: cloudStats.porNube,
+      porTenant: cloudStats.porTenant,
+      porModoUso: cloudStats.porModoUso,
+      porInstanceType: cloudStats.porInstanceType,
+      porService: cloudStats.porService,
+      porResponsable,
+      costoTotal: cloudStats.costoTotal,
+      totalCpu: cloudStats.totalCpu,
+      linuxCount: cloudStats.linuxCount,
+      windowsCount: cloudStats.windowsCount,
+      conResponsable: totalConResponsable,
+      porcentajeConResponsable
     })
   } catch (error) {
     console.error('Error:', error)

@@ -66,7 +66,7 @@ interface Stats {
   porModoUso: { modoUso: string; count: number; costo: string }[]
   porInstanceType: { instanceType: string; count: number }[]
   porService: { service: string; count: number }[]
-  porResponsable: { responsable: string; count: number; costo: string }[]
+  porResponsable: { responsable: string; count: number }[]
   costoTotal: string
   totalCpu: number
   linuxCount: number
@@ -105,6 +105,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadStats()
+    // Actualizar cada 30 segundos
+    const interval = setInterval(loadStats, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadStats = async () => {
@@ -381,19 +384,26 @@ export default function Dashboard() {
               <CardContent>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.porSO || []}>
-                      <defs>
-                        <linearGradient id="barGradSO" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#f43f5e" />
-                          <stop offset="100%" stopColor="#ec4899" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="so" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
-                      <Bar dataKey="count" fill="url(#barGradSO)" radius={[6, 6, 0, 0]} maxBarSize={50} />
-                    </BarChart>
+                    <PieChart>
+                      <Pie
+                        data={stats?.porSO || []}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="count"
+                        nameKey="so"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={true}
+                      >
+                        {(stats?.porSO || []).map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={index === 0 ? '#f43f5e' : index === 1 ? '#8b5cf6' : '#64748b'} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
