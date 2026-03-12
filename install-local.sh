@@ -262,6 +262,98 @@ chown $APP_USER:$APP_GROUP $APP_DIR/server/create_initial_data.js
 sudo -u $APP_USER node $APP_DIR/server/create_initial_data.js
 rm $APP_DIR/server/create_initial_data.js
 
+# Crear roles, módulos y permisos
+log_info "Creando roles y módulos..."
+
+cat > $APP_DIR/server/create_roles.js << 'ROLEOF'
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Crear módulos
+  const modulos = [
+    { nombre: 'Dashboard', descripcion: 'Panel principal', icono: 'dashboard', orden: 1 },
+    { nombre: 'Inventario', descripcion: 'Inventario de equipos', icono: 'inventory', orden: 2 },
+    { nombre: 'Servidores', descripcion: 'Gestión de servidores', icono: 'server', orden: 3 },
+    { nombre: 'Cloud', descripcion: 'Inventario cloud', icono: 'cloud', orden: 4 },
+    { nombre: 'Licencias', descripcion: 'Licencias de software', icono: 'key', orden: 5 },
+    { nombre: 'Certificados', descripcion: 'Certificados SSL', icono: 'security', orden: 6 },
+    { nombre: 'Contratos', descripcion: 'Gestión de contratos', icono: 'contract', orden: 7 },
+    { nombre: 'Proveedores', descripcion: 'Gestión de proveedores', icono: 'business', orden: 8 },
+    { nombre: 'Reportes', descripcion: 'Reportes y estadísticas', icono: 'reports', orden: 9 },
+    { nombre: 'Backups', descripcion: 'Gestión de backups', icono: 'backup', orden: 10 },
+    { nombre: 'Alertas', descripcion: 'Sistema de alertas', icono: 'alert', orden: 11 },
+    { nombre: 'Admin', descripcion: 'Administración del sistema', icono: 'admin', orden: 12 }
+  ];
+
+  for (const mod of modulos) {
+    await prisma.modulo.upsert({
+      where: { nombre: mod.nombre },
+      update: mod,
+      create: mod
+    });
+  }
+
+  // Crear roles
+  const roles = [
+    { nombre: 'admin', descripcion: 'Administrador' },
+    { nombre: 'user', descripcion: 'Usuario' },
+    { nombre: 'viewer', descripcion: 'Solo lectura' }
+  ];
+
+  for (const rol of roles) {
+    await prisma.rol.upsert({
+      where: { nombre: rol.nombre },
+      update: rol,
+      create: rol
+    });
+  }
+
+  // Asignar todos los permisos al rol admin
+  const adminRol = await prisma.rol.findUnique({ where: { nombre: 'admin' } });
+  const allModulos = await prisma.modulo.findMany();
+
+  for (const mod of allModulos) {
+    await prisma.permiso.upsert({
+      where: { id_modulo_rol: { moduloId: mod.id, rolId: adminRol.id } },
+      update: {},
+      create: {
+        moduloId: mod.id,
+        rolId: adminRol.id,
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true
+      }
+    });
+  }
+
+  // Asignar rol admin al usuario
+  const adminUser = await prisma.user.findUnique({ where: { email: 'jorge.canel@grupoalmo.com' } });
+  if (adminUser) {
+    await prisma.usuarioRol.upsert({
+      where: { usuarioId_rolId: { usuarioId: adminUser.id, rolId: adminRol.id } },
+      update: {},
+      create: {
+        usuarioId: adminUser.id,
+        rolId: adminRol.id
+      }
+    });
+  }
+
+  console.log('Roles y módulos creados');
+}
+
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
+ROLEOF
+
+chown $APP_USER:$APP_GROUP $APP_DIR/server/create_roles.js
+sudo -u $APP_USER node $APP_DIR/server/create_roles.js
+rm $APP_DIR/server/create_roles.js
+
 # ============================================
 # 12. Configurar PM2
 # ============================================
