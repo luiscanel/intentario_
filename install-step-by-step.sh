@@ -299,9 +299,6 @@ echo -e "==========================================${NC}"
 
 cd "$PROJECT_DIR"
 
-# Modificar ecosystem.config.js para usar PROJECT_DIR
-sed -i "s|/opt/inventario-almo|${PROJECT_DIR}|g" ecosystem.config.js
-
 # Iniciar servicios
 sudo -u inventario pm2 start ecosystem.config.js
 sudo -u inventario pm2 save
