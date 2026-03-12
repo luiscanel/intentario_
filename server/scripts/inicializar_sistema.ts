@@ -209,12 +209,14 @@ async function inicializarSistema() {
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
     
     const adminExistente = await prisma.user.findUnique({ 
-      where: { email: adminEmail } 
+      where: { email: adminEmail },
+      include: { usuarioRoles: true }
     })
+    
+    const rolAdmin = await prisma.rol.findUnique({ where: { nombre: 'admin' } })
     
     if (!adminExistente) {
       const hashedPassword = await bcrypt.hash(adminPassword, 10)
-      const rolAdmin = await prisma.rol.findUnique({ where: { nombre: 'admin' } })
       
       await prisma.user.create({
         data: {
@@ -234,6 +236,17 @@ async function inicializarSistema() {
       console.log(`  ✅ Usuario admin creado: ${adminEmail} / ${adminPassword}`)
     } else {
       console.log('  ⏭️  Usuario admin ya existe')
+      
+      // Verificar si tiene roles asignados, si no, asignar el rol admin
+      if (adminExistente.usuarioRoles.length === 0 && rolAdmin) {
+        await prisma.usuarioRol.create({
+          data: {
+            usuarioId: adminExistente.id,
+            rolId: rolAdmin.id
+          }
+        })
+        console.log(`  ✅ Rol admin asignado al usuario existente`)
+      }
     }
 
     console.log('\n✅ Sistema inicializado correctamente!')
