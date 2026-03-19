@@ -39,6 +39,23 @@ async function pingHost(ip: string): Promise<{ status: string; latency: number |
   }
 }
 
+// Obtener disponibilidad por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const disponibilidad = await prisma.disponibilidad.findUnique({
+      where: { id: parseInt(id) }
+    })
+    if (!disponibilidad) {
+      return res.status(404).json({ success: false, message: 'Monitor no encontrado' })
+    }
+    res.json({ success: true, data: disponibilidad })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error al obtener monitor' })
+  }
+})
+
 // Obtener estado de todos los servidores monitoreados
 router.get('/', async (req, res) => {
   try {
@@ -174,6 +191,28 @@ router.post('/ping-all', async (req, res) => {
   } catch (error) {
     console.error('Error:', error)
     res.status(500).json({ success: false, message: 'Error al hacer ping a todos' })
+  }
+})
+
+// Actualizar monitor
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { nombre, tipo, puerto, activo } = req.body
+    
+    const disponibilidad = await prisma.disponibilidad.update({
+      where: { id: parseInt(id) },
+      data: {
+        nombre: nombre ?? undefined,
+        tipo: tipo ?? undefined,
+        puerto: puerto ?? undefined,
+        activo: activo ?? undefined
+      }
+    })
+    res.json({ success: true, data: disponibilidad })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error al actualizar monitor' })
   }
 })
 

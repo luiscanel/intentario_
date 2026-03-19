@@ -292,6 +292,7 @@ model Disponibilidad {
   latency     Int?      // Latencia en ms
   ultimoCheck DateTime  @default(now())
   createdAt   DateTime  @default(now())
+  activo      Boolean   @default(true)
 }
 
 model HistorialDisponibilidad {

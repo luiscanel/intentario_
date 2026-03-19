@@ -16,7 +16,7 @@ services:
       - JWT_SECRET=dev-secret-key-min-32-characters-long
       - JWT_EXPIRES_IN=24h
       - DATABASE_URL=file:./prisma/dev.db
-      - CORS_ORIGIN=http://localhost:5174,http://localhost:3001,http://client:5174,http://127.0.0.1:5174,http://192.168.0.11:5174,http://192.168.0.11:3001
+      - CORS_ORIGIN=http://localhost:5174,http://localhost:3001,http://client:5174,http://127.0.0.1:5174,http://192.168.0.11:5174,http://192.168.0.11:3001,http://192.168.0.12:5174,http://192.168.0.12:3001
     working_dir: /app
     mem_limit: 512m
     memswap_limit: 768m

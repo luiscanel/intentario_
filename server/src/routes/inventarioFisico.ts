@@ -3,10 +3,28 @@ import { prisma } from '../prisma/index'
 import { authMiddleware } from '../middleware/auth'
 import { validate, inventarioFisicoSchema, inventarioFisicoUpdateSchema, inventarioFisicoImportSchema, bulkDeleteSchema } from '../validations/index.js'
 import { log } from '../utils/logger.js'
+import { str } from '../utils/importHelpers.js'
 
 const router = Router()
 
 router.use(authMiddleware)
+
+// Obtener item por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const item = await prisma.inventarioFisico.findUnique({
+      where: { id: parseInt(id) }
+    })
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Item no encontrado', code: 'NOT_FOUND' })
+    }
+    res.json({ success: true, data: item })
+  } catch (error) {
+    log.error('Error al obtener item', { error: error instanceof Error ? error.message: String(error), path: req.path })
+    res.status(500).json({ success: false, message: 'Error al obtener item', code: 'FETCH_ERROR' })
+  }
+})
 
 // Obtener todos los items
 router.get('/', async (req, res) => {
@@ -105,12 +123,6 @@ router.post('/bulk-delete', validate(bulkDeleteSchema), async (req, res) => {
 router.post('/import', validate(inventarioFisicoImportSchema), async (req, res) => {
   try {
     const { items } = req.body
-
-    const str = (v: any) => {
-      if (v === null || v === undefined) return ''
-      const trimmed = String(v).trim()
-      return trimmed || ''
-    }
 
     const dataToInsert = items.map((s: any) => ({
       pais: str(s.pais) || 'Colombia',

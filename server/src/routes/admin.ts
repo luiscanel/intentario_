@@ -340,6 +340,39 @@ router.delete('/roles/:id', async (req, res) => {
 // USUARIOS
 // ============================================
 
+// Get usuario por ID
+router.get('/usuarios/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const usuario = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        usuarioRoles: { include: { rol: true } }
+      }
+    })
+    
+    if (!usuario) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado', code: 'NOT_FOUND' })
+    }
+    
+    res.json({ 
+      success: true, 
+      data: {
+        id: usuario.id,
+        email: usuario.email,
+        nombre: usuario.nombre,
+        rol: usuario.rol,
+        activo: usuario.activo,
+        createdAt: usuario.createdAt,
+        roles: usuario.usuarioRoles.map(ur => ({ id: ur.rol.id, nombre: ur.rol.nombre }))
+      }
+    })
+  } catch (error) {
+    log.error('Error en admin', { error: error instanceof Error ? error.message : String(error), path: req.path })
+    res.status(500).json({ success: false, message: 'Error al obtener usuario', code: 'FETCH_ERROR' })
+  }
+})
+
 // Get all usuarios
 router.get('/usuarios', async (req, res) => {
   try {

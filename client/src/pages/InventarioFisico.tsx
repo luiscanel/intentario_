@@ -106,6 +106,7 @@ export default function InventarioFisico() {
       setFormData(emptyItem)
       setEditingItem(null)
       loadItems()
+      loadStats()
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message })
     }
@@ -138,6 +139,7 @@ export default function InventarioFisico() {
       setDeleteConfirmOpen(false)
       setItemToDelete(null)
       loadItems()
+      loadStats()
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message })
     }
@@ -165,6 +167,7 @@ export default function InventarioFisico() {
       setSelectedIds([])
       setSelectMode(false)
       loadItems()
+      loadStats()
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message })
     }
@@ -204,6 +207,7 @@ export default function InventarioFisico() {
       const result = await importInventarioFisico(mappedData)
       toast({ title: result.message || `${result.count} items importados correctamente` })
       loadItems()
+      loadStats()
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message })
     } finally {

@@ -4,7 +4,6 @@ import dotenv from 'dotenv'
 import path from 'path'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
-import http from 'http'
 import authRoutes from './routes/auth'
 import servidoresRoutes from './routes/servidores'
 import inventarioFisicoRoutes from './routes/inventarioFisico'
@@ -45,7 +44,6 @@ import { sanitizeInput } from './utils/apiResponse.js'
 // Importar servicio de notificaciones
 import { startNotificationService } from './services/notificacionesService.js'
 import { cacheService } from './services/cacheService.js'
-import { requestTimeout } from './middleware/timeout.js'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -153,7 +151,7 @@ app.use('/api/documentos', documentosRoutes)
 
 // Nuevos módulos
 app.use('/api/certificados', certificadosRoutes)
-app.use('/api/alertas', configAlertasRoutes)
+app.use('/api/config-alertas', configAlertasRoutes)
 app.use('/api/cambios', cambiosRoutes)
 app.use('/api/backups-programados', backupsProgramadosRoutes)
 app.use('/api/costos', costosRoutes)

@@ -35,7 +35,6 @@ export default function Monitor() {
     if (!autoPing || monitoreo.length === 0) return
     
     const interval = setInterval(() => {
-      console.log('Auto-ping ejecutándose...')
       ejecutarPingAllSilencioso()
     }, 10000)
     
@@ -44,23 +43,17 @@ export default function Monitor() {
 
   const ejecutarPingAllSilencioso = async () => {
     try {
-      console.log('Auto-ping ejecutándose...')
       await pingAll()
-      console.log('Auto-ping completado, recargando datos...')
       await cargarMonitoreo()
-      console.log('Auto-ping datos actualizados')
     } catch (error) {
       console.error('Auto-ping error:', error)
     }
   }
 
   const cargarMonitoreo = async () => {
-    console.log('Cargando monitoreo...')
     try {
       const data = await getMonitor()
-      console.log('Datos recibidos:', data)
       setMonitoreo(data)
-      console.log('Estado actualizado')
     } catch (error) {
       console.error('Error:', error)
       setMonitoreo([])
@@ -94,11 +87,9 @@ export default function Monitor() {
   }
 
   const ejecutarPingAll = async () => {
-    console.log('Ejecutando ping...')
     setPingLoading(true)
     try {
       const res = await pingAll()
-      console.log('Ping resultado:', res)
       const { online, offline } = res
       toast({ title: `Ping completado: ${online} online, ${offline} offline` })
       cargarMonitoreo()

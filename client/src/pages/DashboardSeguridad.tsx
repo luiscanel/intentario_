@@ -149,7 +149,7 @@ export default function DashboardSeguridad() {
           layout="vertical"
         />
         <BarChartCard 
-          data={stats?.porArquitectura?.map((a: any) => ({ name: a.arquitectura, count: a.count })) || []} 
+          data={stats?.porArquitectura?.map((a: any) => ({ name: a.name, count: a.count })) || []} 
           title="Arquitecturas" 
           icon={Cpu}
           colorClass="bg-gradient-to-br from-violet-500 to-purple-500"
@@ -159,13 +159,13 @@ export default function DashboardSeguridad() {
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BarChartCard 
-          data={stats?.porSO?.slice(0, 10)?.map((s: any) => ({ name: s.sistemaOperativo, count: s.count })) || []} 
+          data={stats?.porSO?.slice(0, 10)?.map((s: any) => ({ name: s.name || s.so, count: s.count })) || []} 
           title="Por Sistema Operativo" 
           icon={Monitor}
           colorClass="bg-gradient-to-br from-indigo-500 to-purple-500"
         />
         <BarChartCard 
-          data={stats?.porSO?.slice(0, 12)?.map((s: any) => ({ name: s.name, count: s.count })) || []} 
+          data={stats?.porSO?.slice(0, 12)?.map((s: any) => ({ name: s.name || s.so, count: s.count })) || []} 
           title="SO con Versiones" 
           icon={Globe}
           colorClass="bg-gradient-to-br from-cyan-500 to-blue-500"

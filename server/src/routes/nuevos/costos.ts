@@ -10,6 +10,23 @@ const router = Router()
 // COSTOS CLOUD
 // ============================================
 
+// Obtener costo por ID
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params
+    const costo = await prisma.costoCloud.findUnique({
+      where: { id: parseInt(id) }
+    })
+    if (!costo) {
+      return res.status(404).json({ success: false, message: 'Costo no encontrado' })
+    }
+    res.json({ success: true, data: costo })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error al obtener costo' })
+  }
+})
+
 // Obtener todos los costos
 router.get('/', authMiddleware, async (req, res) => {
   try {

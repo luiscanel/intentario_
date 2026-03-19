@@ -4,24 +4,11 @@ import { authMiddleware } from '../middleware/auth'
 import { validate, servidorSchema, servidorUpdateSchema, servidorImportSchema, bulkDeleteSchema } from '../validations/index.js'
 import { createAuditLog, getRequestInfo } from '../services/auditLogService.js'
 import { asyncHandler, success, notFound, serverError, withPagination } from '../utils/apiResponse.js'
+import { str } from '../utils/importHelpers.js'
 
 const router = Router()
 
 router.use(authMiddleware)
-
-// Obtener servidor por ID
-router.get('/:id', asyncHandler(async (req, res) => {
-  const { id } = req.params
-  const servidor = await prisma.servidor.findUnique({
-    where: { id: parseInt(id) }
-  })
-  
-  if (!servidor) {
-    return res.status(404).json(notFound('Servidor no encontrado'))
-  }
-  
-  res.json(success(servidor))
-}))
 
 // Obtener todos los servidores (con paginación y filtros)
 router.get('/', asyncHandler(async (req, res) => {
@@ -90,6 +77,20 @@ router.get('/search', asyncHandler(async (req, res) => {
   })
 
   res.json(success(servidores))
+}))
+
+// Obtener servidor por ID
+router.get('/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const servidor = await prisma.servidor.findUnique({
+    where: { id: parseInt(id) }
+  })
+  
+  if (!servidor) {
+    return res.status(404).json(notFound('Servidor no encontrado'))
+  }
+  
+  res.json(success(servidor))
 }))
 
 // Crear servidor
@@ -167,12 +168,6 @@ router.post('/bulk-delete', validate(bulkDeleteSchema), asyncHandler(async (req,
 // Importar servidores
 router.post('/import', validate(servidorImportSchema), asyncHandler(async (req, res) => {
   const { servidores } = req.body
-
-  const str = (v: any) => {
-    if (v === null || v === undefined) return ''
-    const trimmed = String(v).trim()
-    return trimmed || ''
-  }
 
   const dataToInsert = servidores.map((s: any) => {
     const server = s as any

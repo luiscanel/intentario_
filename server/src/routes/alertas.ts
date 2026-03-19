@@ -6,6 +6,23 @@ const router = Router()
 
 router.use(authMiddleware)
 
+// Obtener alerta por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const alerta = await prisma.alerta.findUnique({
+      where: { id: parseInt(id) }
+    })
+    if (!alerta) {
+      return res.status(404).json({ success: false, message: 'Alerta no encontrada' })
+    }
+    res.json({ success: true, data: alerta })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error al obtener alerta' })
+  }
+})
+
 // Obtener todas las alertas
 router.get('/', async (req, res) => {
   try {
@@ -57,6 +74,28 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error:', error)
     res.status(500).json({ success: false, message: 'Error al crear alerta' })
+  }
+})
+
+// Actualizar alerta
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { tipo, titulo, mensaje, leida } = req.body
+    
+    const alerta = await prisma.alerta.update({
+      where: { id: parseInt(id) },
+      data: {
+        tipo: tipo ?? undefined,
+        titulo: titulo ?? undefined,
+        mensaje: mensaje ?? undefined,
+        leida: leida ?? undefined
+      }
+    })
+    res.json({ success: true, data: alerta })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ success: false, message: 'Error al actualizar alerta' })
   }
 })
 

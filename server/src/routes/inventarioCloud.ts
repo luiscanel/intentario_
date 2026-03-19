@@ -3,10 +3,28 @@ import { prisma } from '../prisma/index'
 import { authMiddleware } from '../middleware/auth'
 import { validate, inventarioCloudSchema, inventarioCloudUpdateSchema, inventarioCloudImportSchema, bulkDeleteSchema } from '../validations/index.js'
 import { log } from '../utils/logger.js'
+import { str, num } from '../utils/importHelpers.js'
 
 const router = Router()
 
 router.use(authMiddleware)
+
+// Obtener item por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const item = await prisma.inventarioCloud.findUnique({
+      where: { id: parseInt(id) }
+    })
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Instancia no encontrada', code: 'NOT_FOUND' })
+    }
+    res.json({ success: true, data: item })
+  } catch (error) {
+    log.error('Error al obtener instancia cloud', { error: error instanceof Error ? error.message : String(error), path: req.path })
+    res.status(500).json({ success: false, message: 'Error al obtener instancia', code: 'FETCH_ERROR' })
+  }
+})
 
 // Obtener todos los items
 router.get('/', async (req, res) => {
@@ -106,18 +124,6 @@ router.post('/import', validate(inventarioCloudImportSchema), async (req, res) =
     const { items } = req.body
     
     log.info('Importando inventario cloud', { count: items?.length })
-
-    const str = (v: any) => {
-      if (v === null || v === undefined) return ''
-      const trimmed = String(v).trim()
-      return trimmed || ''
-    }
-
-    const num = (v: any) => {
-      if (v === null || v === undefined) return 0
-      const parsed = parseInt(String(v).replace(/,/g, ''))
-      return isNaN(parsed) ? 0 : parsed
-    }
 
     const dataToInsert = items.map((s: any) => ({
       tenant: str(s.tenant),

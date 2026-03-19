@@ -19,9 +19,8 @@ import {
   Globe,
   Layers
 } from 'lucide-react'
-import { StatCard as ModernStatCard, BarChartCard, ModernTooltip } from '@/components/charts/ModernCharts'
+import { StatCard, BarChartCard, ModernTooltip } from '@/components/charts/ModernCharts'
 
-const StatCard = ModernStatCard
 const CustomTooltip = ModernTooltip
 
 interface ResourceStats {

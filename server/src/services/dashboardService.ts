@@ -5,26 +5,6 @@ interface CountByKey {
   [key: string]: number
 }
 
-interface ServidorBasic {
-  id: number
-  host: string
-  nombreVM: string | null
-  ip: string | null
-  pais: string | null
-  ambiente: string | null
-  estado: string | null
-  antivirus?: string | null
-  arquitectura?: string | null
-  sistemaOperativo?: string | null
-  version?: string | null
-  cpu?: number | null
-  memoria?: number | null
-  disco?: number | null
-  responsable?: string | null
-  createdAt?: Date
-  updatedAt?: Date
-}
-
 // Funciones utilitarias
 function groupBy<T extends Record<string, any>>(items: T[], key: keyof T): CountByKey {
   return items.reduce((acc, item) => {

@@ -62,13 +62,13 @@ export type ServidorInput = z.infer<typeof servidorSchema>
 // ============================================
 
 export const inventarioFisicoSchema = z.object({
-  pais: z.string().max(100).optional().nullable(),
-  categoria: z.string().max(100).optional().nullable(),
-  marca: z.string().max(100).optional().nullable(),
+  pais: z.string().max(100).optional().nullable().default('Colombia'),
+  categoria: z.string().max(100).optional().nullable().default('Otro'),
+  marca: z.string().max(100).optional().nullable().default('Generico'),
   modelo: z.string().max(255).optional().nullable(),
   serie: z.string().max(255).optional().nullable(),
   inventario: z.string().max(255).optional().nullable(),
-  estado: z.enum(['Activo', 'Inactivo', 'Mantenimiento']).optional().nullable(),
+  estado: z.enum(['Activo', 'Inactivo', 'Mantenimiento']).optional().nullable().default('Activo'),
   responsable: z.string().max(255).optional().nullable(),
   observaciones: z.string().max(1000).optional().nullable(),
   equipo: z.string().max(255).optional().nullable(),

@@ -22,7 +22,7 @@ router.get('/stats', async (req, res) => {
     const isProtected = (av: string | null) => {
       if (!av || !av.trim()) return false
       const v = av.toLowerCase().trim()
-      return v !== 'sin antivirus' && v !== 'ninguno' && v !== 'no'
+      return v !== 'sin antivirus' && v !== 'ninguno' && v !== 'no' && v !== 'sin'
     }
     const conAntivirus = servidores.filter(s => isProtected(s.antivirus)).length
     const sinAntivirus = totalVMs - conAntivirus

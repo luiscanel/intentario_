@@ -25,9 +25,8 @@ import {
   Calendar,
   Network
 } from 'lucide-react'
-import { StatCard as ModernStatCard, DonutChartCard, BarChartCard, ModernTooltip } from '@/components/charts/ModernCharts'
+import { StatCard, DonutChartCard, BarChartCard, ModernTooltip } from '@/components/charts/ModernCharts'
 
-const StatCard = ModernStatCard
 const CustomTooltip = ModernTooltip
 
 interface PhysicalStats {
@@ -65,7 +64,7 @@ interface PhysicalStats {
 export default function DashboardInventarioFisico() {
   const [stats, setStats] = useState<PhysicalStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'garantia' | 'ip'>('garantia')
+  const [activeTab, setActiveTab] = useState<'garantia' | 'vencida'>('garantia')
 
   useEffect(() => {
     loadStats()
@@ -161,7 +160,7 @@ export default function DashboardInventarioFisico() {
           colorClass="bg-gradient-to-br from-green-500 to-emerald-500"
         />
         <BarChartCard 
-          data={stats?.porCategoria?.map((c: any) => ({ name: c.categoria, count: c.count })) || []} 
+          data={stats?.porCategoria?.map((c: any) => ({ name: c.name, count: c.count })) || []} 
           title="Por Categoría" 
           icon={Package}
           colorClass="bg-gradient-to-br from-violet-500 to-purple-500"
@@ -187,7 +186,7 @@ export default function DashboardInventarioFisico() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="pais" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
                   <Bar dataKey="count" fill="url(#grad-fisico-pais)" radius={[6, 6, 0, 0]} />
@@ -219,7 +218,7 @@ export default function DashboardInventarioFisico() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="marca" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
                   <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
                   <Bar dataKey="count" fill="url(#grad-fisico-marca)" radius={[6, 6, 0, 0]} />
@@ -290,9 +289,9 @@ export default function DashboardInventarioFisico() {
                 Próximas a vencer ({stats?.garantiaProxima?.length || 0})
               </button>
               <button
-                onClick={() => setActiveTab('ip')}
+                onClick={() => setActiveTab('vencida')}
                 className={`px-3 py-1 text-sm rounded ${
-                  activeTab === 'ip' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                  activeTab === 'vencida' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
                 }`}
               >
                 Vencidas ({stats?.garantiaVencida?.length || 0})

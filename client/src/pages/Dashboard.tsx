@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getDashboardStats } from '@/lib/api'
+import { StatCard, ModernTooltip } from '@/components/charts/ModernCharts'
 import { 
   BarChart, 
   Bar, 
@@ -28,19 +29,9 @@ import {
 } from 'lucide-react'
 
 const COLORS_ESTADO = ['#10b981', '#ef4444', '#f59e0b', '#6b7280']
-const COLORS_PAIS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6']
+const COLORS_CATEGORIA = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6']
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-slate-900/95 backdrop-blur-sm px-4 py-3 shadow-2xl rounded-xl border border-slate-700/50">
-        <p className="text-slate-200 font-medium text-sm">{label}</p>
-        <p className="text-blue-400 text-lg font-bold">{payload[0].value}</p>
-      </div>
-    )
-  }
-  return null
-}
+const CustomTooltip = ModernTooltip
 
 interface Stats {
   totalVMs: number
@@ -74,29 +65,6 @@ interface Stats {
   conResponsable: number
   porcentajeConResponsable: number
 }
-
-const StatCard = ({ title, value, icon: Icon, color }: any) => (
-  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group border-0">
-    <CardContent className="p-0">
-      <div className="relative overflow-hidden">
-        <div className={`absolute inset-0 ${color} opacity-90`}></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-        <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
-        <div className="relative flex items-center p-5">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-lg">
-            <Icon className="w-6 h-6 text-white" />
-          </div>
-          <div className="ml-4 flex-1">
-            <p className="text-white/80 text-sm font-medium">{title}</p>
-            <p className="text-3xl font-bold text-white">{value}</p>
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)
-
-
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
@@ -499,7 +467,7 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <defs>
-                        {COLORS_PAIS.map((color, index) => (
+                        {COLORS_CATEGORIA.map((color, index) => (
                           <linearGradient key={index} id={`grad-cat-${index}`} x1="0" y1="0" x2="1" y2="1">
                             <stop offset="0%" stopColor={color} />
                             <stop offset="100%" stopColor={color} stopOpacity={0.7} />
@@ -566,179 +534,6 @@ export default function Dashboard() {
       ) : activeTab === 'cloud' ? (
         <>
           {/* KPI Cards - Cloud */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard title="Total Instancias" value={stats?.totalInstancias || 0} icon={Globe} color="bg-gradient-to-br from-cyan-500 to-blue-500" />
-            <StatCard title="Costo Total (USD)" value={`${stats?.costoTotal || '0'}`} icon={Cpu} color="bg-gradient-to-br from-green-500 to-emerald-500" />
-            <StatCard title="Total CPUs" value={stats?.totalCpu || 0} icon={Server} color="bg-gradient-to-br from-purple-500 to-indigo-500" />
-            <StatCard title="Con Responsable" value={`${stats?.porcentajeConResponsable || 0}%`} icon={Shield} color="bg-gradient-to-br from-orange-500 to-amber-500" />
-          </div>
-
-          {/* Charts Cloud */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Por Proveedor (Nube) */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                    <Globe className="w-4 h-4 text-white" />
-                  </div>
-                  Instancias por Proveedor
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.porNube || []}>
-                      <defs>
-                        <linearGradient id="barGradCloud" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#06b6d4" />
-                          <stop offset="100%" stopColor="#3b82f6" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="nube" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
-                      <Bar dataKey="count" fill="url(#barGradCloud)" radius={[6, 6, 0, 0]} maxBarSize={50} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Por Modo de Uso */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    <Layers className="w-4 h-4 text-white" />
-                  </div>
-                  Por Modo de Uso
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={stats?.porModoUso || []}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={4}
-                        dataKey="count"
-                        nameKey="modoUso"
-                      >
-                        {COLORS_PAIS.map((color, index) => (
-                          <Cell key={`cell-${index}`} fill={color} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={8} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Por Tenant */}
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                    <Server className="w-4 h-4 text-white" />
-                  </div>
-                  Instancias por Tenant (Top 10)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.porTenant?.slice(0, 10) || []}>
-                      <defs>
-                        <linearGradient id="barGradTenant" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#22c55e" />
-                          <stop offset="100%" stopColor="#10b981" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="tenant" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
-                      <Bar dataKey="count" fill="url(#barGradTenant)" radius={[6, 6, 0, 0]} maxBarSize={50} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Por Sistema Operativo */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-                    <Monitor className="w-4 h-4 text-white" />
-                  </div>
-                  Por Sistema Operativo
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.porSO?.slice(0, 8) || []}>
-                      <defs>
-                        <linearGradient id="barGradSOCloud" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#f97316" />
-                          <stop offset="100%" stopColor="#f59e0b" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="so" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
-                      <Bar dataKey="count" fill="url(#barGradSOCloud)" radius={[6, 6, 0, 0]} maxBarSize={40} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Por Responsable */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                  Por Responsable
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.porResponsable?.slice(0, 8) || []}>
-                      <defs>
-                        <linearGradient id="barGradRespCloud" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#6366f1" />
-                          <stop offset="100%" stopColor="#8b5cf6" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="responsable" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
-                      <Bar dataKey="count" fill="url(#barGradRespCloud)" radius={[6, 6, 0, 0]} maxBarSize={40} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      ) : activeTab === 'cloud' ? (
-        <>
-          {/* KPI Cards - Cloud */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <StatCard title="Total Instancias" value={stats?.totalInstancias || 0} icon={Globe} color="bg-gradient-to-br from-cyan-500 to-blue-500" />
             <StatCard title="Costo Total (USD)" value={`${stats?.costoTotal || '0'}`} icon={Cpu} color="bg-gradient-to-br from-green-500 to-emerald-500" />
@@ -771,7 +566,7 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="nube" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                       <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} formatter={(value: number) => [`${value}`, 'Costo']} />
                       <Bar dataKey="costo" fill="url(#barGradCloud)" radius={[6, 6, 0, 0]} maxBarSize={50} name="Costo USD" />
@@ -802,7 +597,7 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="modoUso" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                       <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} formatter={(value: number) => [`${value}`, 'Costo']} />
                       <Bar dataKey="costo" fill="url(#barGradModo)" radius={[6, 6, 0, 0]} maxBarSize={50} name="Costo USD" />
@@ -833,7 +628,7 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="tenant" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                       <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} formatter={(value: number) => [`${value}`, 'Costo']} />
                       <Bar dataKey="costo" fill="url(#barGradTenant)" radius={[6, 6, 0, 0]} maxBarSize={50} name="Costo USD" />
@@ -864,7 +659,7 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="so" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                       <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} formatter={(value: number) => [`${value}`, 'Costo']} />
                       <Bar dataKey="costo" fill="url(#barGradSOCloud)" radius={[6, 6, 0, 0]} maxBarSize={40} name="Costo USD" />
@@ -895,7 +690,7 @@ export default function Dashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="responsable" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                       <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} formatter={(value: number) => [`${value}`, 'Costo']} />
                       <Bar dataKey="costo" fill="url(#barGradRespCloud)" radius={[6, 6, 0, 0]} maxBarSize={40} name="Costo USD" />

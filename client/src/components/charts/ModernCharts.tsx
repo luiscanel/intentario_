@@ -1,13 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from 'recharts'
 
 // Tooltip moderno
 export const ModernTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const entry = payload[0]?.payload || {}
+    const name = entry.name || entry.pais || entry.categoria || entry.equipo || label || ''
+    const value = payload[0]?.value || 0
     return (
       <div className="bg-slate-900/95 backdrop-blur-sm px-4 py-3 shadow-2xl rounded-xl border border-slate-700/50">
-        <p className="text-slate-200 font-medium text-sm">{label}</p>
-        <p className="text-blue-400 text-lg font-bold">{payload[0].value}</p>
+        {name && <p className="text-slate-200 font-medium text-sm">{name}</p>}
+        <p className="text-blue-400 text-lg font-bold">{value}</p>
       </div>
     )
   }
@@ -143,11 +146,17 @@ export const BarChartCard = ({ data, title, icon: Icon, colorClass, dataKey = "c
               )}
               <Tooltip content={<ModernTooltip />} cursor={{ fill: '#f1f5f9' }} />
               <Bar 
-                dataKey={dataKey} 
+                dataKey={dataKey}
                 fill={`url(#${gradientId})`}
                 radius={[6, 6, 0, 0]}
                 maxBarSize={50}
-              />
+              >
+                <LabelList
+                  dataKey={dataKey}
+                  position={layout === 'vertical' ? 'right' : 'top'}
+                  style={{ fontSize: 11, fontWeight: 600, fill: '#475569' }}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -184,7 +193,13 @@ export const MultiBarChartCard = ({ data, title, icon: Icon, colorClass, dataKey
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
               <Tooltip content={<ModernTooltip />} cursor={{ fill: '#f1f5f9' }} />
-              <Bar dataKey={dataKey} fill={`url(#${gradientId})`} radius={[6, 6, 0, 0]} maxBarSize={50} />
+              <Bar dataKey={dataKey} fill={`url(#${gradientId})`} radius={[6, 6, 0, 0]} maxBarSize={50}>
+                <LabelList
+                  dataKey={dataKey}
+                  position="top"
+                  style={{ fontSize: 11, fontWeight: 600, fill: '#475569' }}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

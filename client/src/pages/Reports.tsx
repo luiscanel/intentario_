@@ -167,7 +167,7 @@ export default function Reports() {
             <div className="flex gap-3 mt-4">
               <Button onClick={exportToExcel} disabled={loading} className="flex-1"><Download className="w-4 h-4 mr-2" />Excel</Button>
               <Button onClick={exportToCSV} disabled={loading} variant="outline" className="flex-1"><Download className="w-4 h-4 mr-2" />CSV</Button>
-              <Button variant="outline" className="flex-1"><Mail className="w-4 h-4 mr-2" />Email</Button>
+              <Button variant="outline" className="flex-1" disabled title="Próximamente"><Mail className="w-4 h-4 mr-2" />Email</Button>
             </div>
           </CardContent>
         </Card>

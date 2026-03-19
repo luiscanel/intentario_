@@ -1,1 +1,0 @@
-import{G as f}from"./index-gw9Phb4n.js";function l(r,t){var u,i,n;const s=f(e=>e.user);if(!s)return!1;if((u=s.roles)!=null&&u.includes("admin"))return!0;if(!t)return((i=s.modulos)==null?void 0:i.includes(r))||!1;const o=`${r}_${t}`;return((n=s.permisos)==null?void 0:n.some(e=>typeof e=="string"&&e===o||e.modulo===r&&e.accion===t))||!1}export{l as u};

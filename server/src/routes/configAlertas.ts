@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js'
 
 const router = Router()
 
-router.get('/config-alertas', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const configs = await prisma.configAlerta.findMany({ orderBy: { tipo: 'asc' } })
     res.json({ success: true, data: configs })
@@ -13,7 +13,7 @@ router.get('/config-alertas', authMiddleware, async (req, res) => {
   }
 })
 
-router.put('/config-alertas/:tipo', authMiddleware, async (req, res) => {
+router.put('/:tipo', authMiddleware, async (req, res) => {
   try {
     const { tipo } = req.params
     const { nombre, diasAntelacion, activo, enviarEmail, crearAlerta, emailDestino } = req.body
